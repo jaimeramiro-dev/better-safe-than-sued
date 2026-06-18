@@ -41,6 +41,30 @@ export interface AnalyzeInput {
   acceptsCards: boolean;
 }
 
+/** A single passage in the grounded regulatory corpus. */
+export interface RegulatorySource {
+  /** stable identifier, e.g. "psd2-74" */
+  source_id: string;
+  /** which regulatory layer it belongs to */
+  layer:
+    | "payments-sca"
+    | "chargebacks"
+    | "data-protection"
+    | "consumer-rights"
+    | "structure-liability"
+    | "fraud-aml";
+  /** EU or a specific member state */
+  jurisdiction: "EU" | "Spain";
+  /** the precise legal instrument, e.g. "GDPR Art. 5" */
+  instrument: string;
+  /** short human-readable title */
+  title: string;
+  /** the actual regulatory text */
+  quotedText: string;
+  /** link to the full source document */
+  url: string;
+}
+
 export const EU_COUNTRIES = [
   "Spain",
   "Germany",
@@ -58,4 +82,13 @@ export const PLATFORMS = [
   "Wix",
   "Etsy",
   "Custom build",
+] as const;
+
+export const CORPUS_LAYERS = [
+  "payments-sca",
+  "chargebacks",
+  "data-protection",
+  "consumer-rights",
+  "structure-liability",
+  "fraud-aml",
 ] as const;

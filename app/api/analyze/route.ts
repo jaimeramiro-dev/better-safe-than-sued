@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { AnalyzeInput, RiskMap, Severity } from "@/lib/types";
+import { retrieveCorpusContext } from "@/lib/corpus";
 
 // Never cache: every request is a fresh model call.
 export const dynamic = "force-dynamic";
@@ -13,13 +14,7 @@ Your job is to read their plain-language description plus the structured context
 
 NON-NEGOTIABLE RULES
 1. SPECIFICITY OVER GENERICS. Reason about the *intersection* of the exact factors given — product type x country x audience x platform x payment method x whether they sell gift cards or digital goods. Never list generic "have a privacy policy" boilerplate. A gift-card store in Spain on Shopify taking cards MUST get visibly different, fraud-heavy output than a print-on-demand t-shirt shop in Germany. The whole value is in the combination.
-2. GROUND EVERY POINT IN A REAL FRAMEWORK. Use the genuine EU frameworks that actually apply, and name the source in every risk:
-   - PSD2 / Strong Customer Authentication (SCA, 3D Secure) for card payment authentication.
-   - Card-network chargeback rules and dispute-ratio / excessive-chargeback thresholds (Visa VDMP / Mastercard ECM) — exceeding them can cost the merchant their payment account.
-   - GDPR for personal data.
-   - Consumer Rights Directive — the 14-day right of withdrawal, and the digital-content exception when supply starts immediately with consent.
-   - Fraud and AML exposure.
-   When the country is Spain, add Spain-specific notes (e.g. autonomo / SL registration, Hacienda VAT obligations, AEPD as the data authority). Adapt for other countries accordingly.
+2. GROUND EVERY POINT IN THE SOURCES PROVIDED BELOW. The RELEVANT REGULATORY SOURCES section contains the only legal content you may use. Every risk MUST cite at least one source_id from that section (format: [source_id]). If a claim is not supported by a provided source, do not make it. Never use your own knowledge of the law — only the passages supplied.
 3. FRAUD AND CHARGEBACKS ARE THE PRIORITY when they apply. Gift cards, game codes and other instant digital goods are a top target for stolen-card fraud (bought, resold fast, irreversible). Flag clearly that: amber / grey / "review" fraud signals are NOT safe to ship on; instantly-delivered high-value digital orders are the classic stolen-card pattern; and a wave of chargebacks can exceed card-network dispute thresholds and get the founder banned from their payment processor and chased for the losses — even more dangerous with no legal entity shielding them.
 4. NEVER GIVE A LEGAL VERDICT and never tell them what they are legally required to do. You explain, surface and clarify; the decision stays with the human. Recommend validating important decisions with a qualified professional. Be honest about uncertainty.
 5. PLAIN LANGUAGE. No legalese in the explanations. Short sentences. Talk to them like a sharp friend who happens to know this stuff.
@@ -81,6 +76,8 @@ const RISK_MAP_SCHEMA = {
 } as const;
 
 function buildUserPrompt(input: AnalyzeInput): string {
+  const { context: corpusContext } = retrieveCorpusContext(input);
+
   const lines = [
     "Here is the founder's business. Build their risk map.",
     "",
@@ -93,6 +90,8 @@ function buildUserPrompt(input: AnalyzeInput): string {
     "",
     "THEIR OWN WORDS",
     input.description.trim() || "(no free-text description provided)",
+    "",
+    corpusContext,
   ];
   return lines.join("\n");
 }
