@@ -6,6 +6,7 @@ import type {
   RiskMap,
   Severity,
 } from "@/lib/types";
+import { z } from "zod";
 
 // Never cache: every request is a fresh model call.
 export const dynamic = "force-dynamic";
@@ -14,6 +15,77 @@ export const maxDuration = 60;
 const MODEL = "claude-opus-4-8";
 const SEVERITY_ENUM: Severity[] = ["low", "medium", "high"];
 const CONFIDENCE_ENUM: Confidence[] = ["high", "medium", "low"];
+
+// ---------------------------------------------------------------------------
+// Zod validation schemas
+// ---------------------------------------------------------------------------
+
+const severitySchema = z.enum(["low", "medium", "high"]);
+const confidenceSchema = z.enum(["high", "medium", "low"]);
+
+const analyzeInputSchema = z.object({
+  description: z.string(),
+  country: z.string(),
+  platform: z.string(),
+  productType: z.string(),
+  sellsGiftCards: z.boolean(),
+  acceptsCards: z.boolean(),
+});
+
+const genRiskSchema = z.object({
+  title: z.string(),
+  severity: severitySchema,
+  plainExplanation: z.string(),
+  whyItAppliesToYou: z.string(),
+  sourceId: z.string(),
+  confidence: confidenceSchema,
+});
+
+const genResultSchema = z.object({
+  businessSummary: z.string(),
+  overallRiskLevel: severitySchema,
+  assumptions: z.array(z.string()),
+  risks: z.array(genRiskSchema),
+  preLaunchChecklist: z.array(
+    z.object({ item: z.string(), reason: z.string() }),
+  ),
+  watchFor: z.array(z.string()),
+});
+
+const verdictSchema = z.object({
+  index: z.number().int(),
+  verified: z.boolean(),
+  confidence: confidenceSchema,
+});
+
+const verificationResultSchema = z.object({
+  verdicts: z.array(verdictSchema),
+});
+
+const riskSchema = z.object({
+  title: z.string(),
+  severity: severitySchema,
+  plainExplanation: z.string(),
+  whyItAppliesToYou: z.string(),
+  source: z.string(),
+  sourceUrl: z.string(),
+  confidence: confidenceSchema,
+  verified: z.boolean(),
+});
+
+const checklistItemSchema = z.object({
+  item: z.string(),
+  reason: z.string(),
+});
+
+const riskMapSchema = z.object({
+  businessSummary: z.string(),
+  overallRiskLevel: severitySchema,
+  assumptions: z.array(z.string()),
+  risks: z.array(riskSchema),
+  preLaunchChecklist: z.array(checklistItemSchema),
+  watchFor: z.array(z.string()),
+});
 
 // ---------------------------------------------------------------------------
 // Prompts
@@ -259,7 +331,7 @@ export async function POST(request: Request) {
 
   let input: AnalyzeInput;
   try {
-    input = (await request.json()) as AnalyzeInput;
+    input = analyzeInputSchema.parse(await request.json());
   } catch {
     return Response.json({ error: "Invalid request body." }, { status: 400 });
   }
@@ -288,6 +360,7 @@ export async function POST(request: Request) {
       effort: "medium",
       maxTokens: 4000,
     });
+    genResultSchema.parse(gen);
 
     // 2) Verification pass — a second model audits each claim against its source.
     //    Wrapped so a failure degrades gracefully instead of breaking the request.
@@ -300,6 +373,7 @@ export async function POST(request: Request) {
         effort: "low",
         maxTokens: 1500,
       });
+      verificationResultSchema.parse(result);
       for (const v of result.verdicts) verdicts.set(v.index, v);
     } catch (err) {
       console.warn("Verification pass failed; using grounded defaults.", err);
@@ -347,6 +421,7 @@ export async function POST(request: Request) {
       preLaunchChecklist: gen.preLaunchChecklist,
       watchFor: gen.watchFor,
     };
+    riskMapSchema.parse(riskMap);
     return Response.json(riskMap);
   } catch (err) {
     if (err instanceof RefusalError) {
