@@ -32,6 +32,10 @@ export const metadata: Metadata = {
   },
 };
 
+const INLINE_THEME_SCRIPT = `
+(function(){try{var e=localStorage.getItem("bsts-theme");if(e==="dark")document.documentElement.classList.add("dark")}catch(e){}})()
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -40,8 +44,14 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} h-full antialiased`}
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{ __html: INLINE_THEME_SCRIPT }}
+        />
+      </head>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         {children}
       </body>

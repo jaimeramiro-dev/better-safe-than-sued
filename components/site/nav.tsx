@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useScroll, useMotionValueEvent } from "framer-motion";
+import { Moon, Sun } from "lucide-react";
 import { Wordmark } from "@/components/site/logo";
 import { cn } from "@/lib/utils";
 
@@ -11,9 +12,30 @@ const LINKS = [
   { href: "#responsible", label: "Responsible AI" },
 ];
 
+const STORAGE_KEY = "bsts-theme";
+
+function getInitialDark(): boolean {
+  if (typeof document === "undefined") return false;
+  return document.documentElement.classList.contains("dark");
+}
+
+function useTheme() {
+  const [dark, setDark] = useState(getInitialDark);
+
+  function toggle() {
+    const next = !dark;
+    setDark(next);
+    document.documentElement.classList.toggle("dark", next);
+    localStorage.setItem(STORAGE_KEY, next ? "dark" : "light");
+  }
+
+  return { dark, toggle };
+}
+
 export function Nav() {
   const [scrolled, setScrolled] = useState(false);
   const { scrollY } = useScroll();
+  const { dark, toggle } = useTheme();
   useMotionValueEvent(scrollY, "change", (y) => setScrolled(y > 8));
 
   return (
@@ -45,12 +67,23 @@ export function Nav() {
           ))}
         </div>
 
-        <a
-          href="#try"
-          className="rounded-md bg-ink px-4 py-2 text-[14px] font-medium text-paper transition-[transform,background-color] duration-150 hover:bg-ink-soft active:translate-y-px"
-        >
-          Try it
-        </a>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={toggle}
+            aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+            className="grid h-9 w-9 place-items-center rounded-md border border-hair bg-paper text-muted transition-colors hover:border-ink/20 hover:text-ink"
+          >
+            {dark ? <Sun size={15} /> : <Moon size={15} />}
+          </button>
+
+          <a
+            href="#try"
+            className="rounded-md bg-ink px-4 py-2 text-[14px] font-medium text-paper transition-[transform,background-color] duration-150 hover:bg-ink-soft active:translate-y-px"
+          >
+            Try it
+          </a>
+        </div>
       </nav>
     </header>
   );
