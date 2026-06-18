@@ -34,6 +34,9 @@ export interface RiskMap {
   /** one-sentence plain-language restatement of what the founder is doing */
   businessSummary: string;
   overallRiskLevel: Severity;
+  /** inferences the model had to make about an ambiguous business, surfaced so
+   *  the founder can confirm or correct them */
+  assumptions: string[];
   risks: Risk[];
   preLaunchChecklist: ChecklistItem[];
   /** specific fraud/operational red flags this founder should monitor */

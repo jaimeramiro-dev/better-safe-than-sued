@@ -33,7 +33,9 @@ NON-NEGOTIABLE RULES
 7. NEVER GIVE A LEGAL VERDICT. Explain, surface and clarify; the decision stays with the human. Be honest about uncertainty and recommend validating important decisions with a qualified professional.
 8. PLAIN LANGUAGE. No legalese in the explanations. Short sentences, like a sharp friend who happens to know this stuff.
 
-OUTPUT: the risks that genuinely apply to this specific business, most-severe first (usually 5 to 7; do not pad with generic risks). overallRiskLevel reflects the worst realistic exposure given what they actually described. preLaunchChecklist has 3-6 concrete setup actions that fit their business. watchFor has 3-6 short, specific red flags relevant to them.`;
+OUTPUT: the risks that genuinely apply to this specific business, most-severe first (usually 5 to 7; do not pad with generic risks). overallRiskLevel reflects the worst realistic exposure given what they actually described. preLaunchChecklist has 3-6 concrete setup actions that fit their business. watchFor has 3-6 short, specific red flags relevant to them.
+
+ASSUMPTIONS: in "assumptions", list the 2-4 inferences you had to make because their description was incomplete or ambiguous and that most affect the risks (for example what exactly they sell, or whether THEY charge the customer's card versus a platform doing it). Phrase each as a short statement they can confirm or correct, e.g. "We assumed you charge customers directly through Shopify, not via Roblox." Do not list things they stated explicitly. Use an empty list only if nothing important had to be assumed.`;
 
 const VERIFICATION_SYSTEM = `You are a strict fact-checker for a compliance tool. You are given risk claims and the exact source text each one cites. For every risk, decide whether the cited source actually supports the claim.
 
@@ -53,6 +55,7 @@ function generationSchema(sourceIds: string[]) {
     properties: {
       businessSummary: { type: "string" },
       overallRiskLevel: { type: "string", enum: SEVERITY_ENUM },
+      assumptions: { type: "array", items: { type: "string" } },
       risks: {
         type: "array",
         items: {
@@ -93,6 +96,7 @@ function generationSchema(sourceIds: string[]) {
     required: [
       "businessSummary",
       "overallRiskLevel",
+      "assumptions",
       "risks",
       "preLaunchChecklist",
       "watchFor",
@@ -136,6 +140,7 @@ interface GenRisk {
 interface GenResult {
   businessSummary: string;
   overallRiskLevel: Severity;
+  assumptions: string[];
   risks: GenRisk[];
   preLaunchChecklist: { item: string; reason: string }[];
   watchFor: string[];
@@ -337,6 +342,7 @@ export async function POST(request: Request) {
     const riskMap: RiskMap = {
       businessSummary: gen.businessSummary,
       overallRiskLevel: gen.overallRiskLevel,
+      assumptions: gen.assumptions ?? [],
       risks,
       preLaunchChecklist: gen.preLaunchChecklist,
       watchFor: gen.watchFor,

@@ -7,6 +7,7 @@ import {
   BookOpen,
   Check,
   CircleAlert,
+  CircleHelp,
   Eye,
   ShieldCheck,
 } from "lucide-react";
@@ -115,6 +116,38 @@ export function RiskMapView({ data }: { data: RiskMap }) {
           Grounded in official sources, then double-checked
         </span>
       </motion.div>
+
+      {/* What we assumed — surfaced so the founder can confirm or correct it */}
+      {data.assumptions.length > 0 && (
+        <motion.div
+          variants={item}
+          className="flex gap-3 rounded-lg border border-hair bg-sand/40 p-5"
+        >
+          <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-md bg-paper text-muted">
+            <CircleHelp size={15} aria-hidden />
+          </span>
+          <div className="flex-1">
+            <p className="text-[13.5px] font-semibold text-ink">
+              What we assumed about your business
+            </p>
+            <p className="mt-0.5 text-[12.5px] leading-relaxed text-muted">
+              These risks depend on the reading below. If any of it is wrong,
+              edit your description and map again.
+            </p>
+            <ul className="mt-3 space-y-2">
+              {data.assumptions.map((a, i) => (
+                <li
+                  key={i}
+                  className="flex gap-2.5 text-[13.5px] leading-relaxed text-ink-soft"
+                >
+                  <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-muted/50" />
+                  {a}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </motion.div>
+      )}
 
       {/* Risk cards, ordered by the model most-severe first */}
       <div className="flex flex-col gap-3">
