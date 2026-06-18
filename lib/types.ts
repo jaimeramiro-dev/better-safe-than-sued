@@ -54,7 +54,16 @@ export interface RegulatorySource {
     | "structure-liability"
     | "fraud-aml";
   /** EU or a specific member state */
-  jurisdiction: "EU" | "Spain";
+  jurisdiction:
+    | "EU"
+    | "Spain"
+    | "Germany"
+    | "France"
+    | "Italy"
+    | "Netherlands"
+    | "Ireland"
+    | "Portugal"
+    | "Belgium";
   /** the precise legal instrument, e.g. "GDPR Art. 5" */
   instrument: string;
   /** short human-readable title */

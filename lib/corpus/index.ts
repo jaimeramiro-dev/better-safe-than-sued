@@ -1,6 +1,18 @@
 import type { AnalyzeInput, RegulatorySource } from "@/lib/types";
 import { REGULATORY_SOURCES } from "@/lib/corpus/sources";
 
+/** All supported countries for jurisdiction matching. */
+const SUPPORTED_COUNTRIES = new Set([
+  "Spain",
+  "Germany",
+  "France",
+  "Italy",
+  "Netherlands",
+  "Ireland",
+  "Portugal",
+  "Belgium",
+]);
+
 /**
  * Returns the set of regulatory layers that apply to the given input.
  * A layer applies when the input has relevant characteristics.
@@ -45,17 +57,20 @@ export function retrieveCorpusContext(input: AnalyzeInput): {
   context: string;
 } {
   const layers = relevantLayers(input);
-  const country = input.country;
+  const country = SUPPORTED_COUNTRIES.has(input.country)
+    ? input.country
+    : null;
 
-  const sources = REGULATORY_SOURCES.filter(
-    (s) =>
-      layers.has(s.layer) &&
-      (s.jurisdiction === "EU" || s.jurisdiction === country),
-  );
+  const sources = REGULATORY_SOURCES.filter((s) => {
+    if (!layers.has(s.layer)) return false;
+    if (s.jurisdiction === "EU") return true;
+    if (country && s.jurisdiction === country) return true;
+    return false;
+  });
 
   const lines: string[] = ["RELEVANT REGULATORY SOURCES"];
   lines.push(
-    `(retrieved for: layers=${[...layers].join(", ")}, jurisdiction=${country})`,
+    `(retrieved for: layers=${[...layers].join(", ")}, jurisdiction=${country ?? "EU"})`,
     "",
   );
 
