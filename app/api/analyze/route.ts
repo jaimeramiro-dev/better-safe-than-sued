@@ -1,88 +1,175 @@
 import Anthropic from "@anthropic-ai/sdk";
-import type { AnalyzeInput, RiskMap, Severity } from "@/lib/types";
-import { retrieveCorpusContext } from "@/lib/corpus";
+import { selectSources, type KnowledgeEntry } from "@/lib/knowledge";
+import type {
+  AnalyzeInput,
+  Confidence,
+  RiskMap,
+  Severity,
+} from "@/lib/types";
 
 // Never cache: every request is a fresh model call.
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 const MODEL = "claude-opus-4-8";
+const SEVERITY_ENUM: Severity[] = ["low", "medium", "high"];
+const CONFIDENCE_ENUM: Confidence[] = ["high", "medium", "low"];
 
-const SYSTEM_PROMPT = `You are a senior EU e-commerce compliance and payments-risk analyst. Your reader is a first-time online founder with NO legal background and NO budget for a lawyer or tax advisor. They are about to launch, or have just launched, and they do not know what they don't know.
+// ---------------------------------------------------------------------------
+// Prompts
+// ---------------------------------------------------------------------------
 
-Your job is to read their plain-language description plus the structured context, and return a clear, specific RISK MAP: what they are exposed to, what to set up before selling, and what to watch for. You translate dense regulation into plain English a 17-year-old founder could act on.
+const GENERATION_SYSTEM = `You are a senior EU e-commerce compliance and payments-risk analyst. Your reader is a first-time online founder with NO legal background and NO budget for a lawyer or tax advisor. They are about to launch, or just launched, and they do not know what they don't know.
+
+Return a clear, specific RISK MAP grounded in the SOURCES you are given. Translate dense regulation into plain English a 17-year-old founder could act on.
 
 NON-NEGOTIABLE RULES
-1. SPECIFICITY OVER GENERICS. Reason about the *intersection* of the exact factors given — product type x country x audience x platform x payment method x whether they sell gift cards or digital goods. Never list generic "have a privacy policy" boilerplate. A gift-card store in Spain on Shopify taking cards MUST get visibly different, fraud-heavy output than a print-on-demand t-shirt shop in Germany. The whole value is in the combination.
-2. GROUND EVERY POINT IN THE SOURCES PROVIDED BELOW. The RELEVANT REGULATORY SOURCES section contains the only legal content you may use. Every risk MUST cite at least one source_id from that section (format: [source_id]). If a claim is not supported by a provided source, do not make it. Never use your own knowledge of the law — only the passages supplied.
-3. FRAUD AND CHARGEBACKS ARE THE PRIORITY when they apply. Gift cards, game codes and other instant digital goods are a top target for stolen-card fraud (bought, resold fast, irreversible). Flag clearly that: amber / grey / "review" fraud signals are NOT safe to ship on; instantly-delivered high-value digital orders are the classic stolen-card pattern; and a wave of chargebacks can exceed card-network dispute thresholds and get the founder banned from their payment processor and chased for the losses — even more dangerous with no legal entity shielding them.
-4. NEVER GIVE A LEGAL VERDICT and never tell them what they are legally required to do. You explain, surface and clarify; the decision stays with the human. Recommend validating important decisions with a qualified professional. Be honest about uncertainty.
-5. PLAIN LANGUAGE. No legalese in the explanations. Short sentences. Talk to them like a sharp friend who happens to know this stuff.
+1. GROUNDED, NEVER INVENTED. You are given a list of SOURCES (each has an id, a framework name and a fact). Every risk MUST be grounded in one of these sources. Set "sourceId" to the id of the single source that backs the risk. Do NOT invent regulations, article numbers, thresholds, or facts that are not in the provided sources; take numbers and wording from the source text. If a genuinely important risk for THIS business is not covered by any source, you may still include it but set its "sourceId" to "general".
+2. CONFIDENCE. Set "confidence" to "high" when the cited source directly and specifically supports the claim, "medium" when it broadly supports it, and "low" for a general principle or a loose connection. Also lower the confidence for any risk that depends on an assumption you had to make about their business (see rules 4 and 5).
+3. ANALYZE THE BUSINESS IN FRONT OF YOU, NOT A TEMPLATE. Reason from what THIS founder actually described. Do not project a default story (gift cards, instant-code resale, stolen-card fraud) onto every business. Respect their explicit answers: if they said they do NOT sell gift cards or digital goods, do not treat them as a gift-card seller. Include a risk only if it plausibly fits what they told you.
+4. STATE ASSUMPTIONS, DO NOT ASSERT THEM. If the description is vague about what they sell or how money flows, say plainly what the risk depends on and tell them to confirm it, instead of stating a guess as fact. Use "if you are X, then..." framing for anything you are inferring. Never invent specifics they did not give: say "your payment processor" unless they named one, and do not assert a particular product, PCI scope, or tool as fact unless they mentioned it.
+5. WHO ACTUALLY BEARS THE RISK. A chargeback or stolen-card loss only falls on the founder if THEY are the merchant of record: the one charging the customer's card and delivering the goods. If a platform processes the payment and merely pays them out, or the customer buys from a platform directly, the payment-fraud and chargeback exposure sits with that platform, not the founder. Work out which case applies from what they said; if it is unclear, present the risk conditionally and tell them to confirm who charges the customer.
+6. CALIBRATE, DO NOT CATASTROPHIZE. Match severity and emphasis to what they actually described. Do not default every card-taking or digital business to maximum fraud-and-chargeback panic. Fraud and chargebacks are serious WHEN they clearly apply (the founder takes cards as merchant of record and delivers instantly); lead with them only when the facts support it. Otherwise give them their proper weight among the other risks.
+7. NEVER GIVE A LEGAL VERDICT. Explain, surface and clarify; the decision stays with the human. Be honest about uncertainty and recommend validating important decisions with a qualified professional.
+8. PLAIN LANGUAGE. No legalese in the explanations. Short sentences, like a sharp friend who happens to know this stuff.
 
-OUTPUT
-Return between 5 and 8 risks, ordered most-severe first. Set overallRiskLevel to reflect the worst realistic exposure. The preLaunchChecklist is concrete setup actions (3-6 items). watchFor is short, specific operational/fraud red flags (3-6 items) they should literally watch for in their dashboard. Every field must be tailored to the business described.`;
+OUTPUT: the risks that genuinely apply to this specific business, most-severe first (usually 5 to 7; do not pad with generic risks). overallRiskLevel reflects the worst realistic exposure given what they actually described. preLaunchChecklist has 3-6 concrete setup actions that fit their business. watchFor has 3-6 short, specific red flags relevant to them.
 
-// Structured-output schema. Forces strictly-valid JSON in the RiskMap shape.
-const SEVERITY_ENUM: Severity[] = ["low", "medium", "high"];
+ASSUMPTIONS: in "assumptions", list the 2-4 inferences you had to make because their description was incomplete or ambiguous and that most affect the risks (for example what exactly they sell, or whether THEY charge the customer's card versus a platform doing it). Phrase each as a short statement they can confirm or correct, e.g. "We assumed you charge customers directly through Shopify, not via Roblox." Do not list things they stated explicitly. Use an empty list only if nothing important had to be assumed.`;
 
-const RISK_MAP_SCHEMA = {
+const VERIFICATION_SYSTEM = `You are a strict fact-checker for a compliance tool. You are given risk claims and the exact source text each one cites. For every risk, decide whether the cited source actually supports the claim.
+
+Be skeptical and protect the user from hallucinations:
+- "verified": true ONLY if the cited source genuinely supports the claim, including any specific numbers or rules stated. If the claim invents a threshold, article, or fact that is not in the cited source, set "verified": false.
+- "confidence": "high" if the source fully and specifically supports the claim, "medium" if it broadly supports it, "low" if it is weakly supported, contradicted, or a general principle with no real source.
+Do not add new claims. Return one verdict per risk, using the same "index".`;
+
+// ---------------------------------------------------------------------------
+// Schemas (structured outputs -> guaranteed schema-valid JSON)
+// ---------------------------------------------------------------------------
+
+function generationSchema(sourceIds: string[]) {
+  return {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      businessSummary: { type: "string" },
+      overallRiskLevel: { type: "string", enum: SEVERITY_ENUM },
+      assumptions: { type: "array", items: { type: "string" } },
+      risks: {
+        type: "array",
+        items: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            title: { type: "string" },
+            severity: { type: "string", enum: SEVERITY_ENUM },
+            plainExplanation: { type: "string" },
+            whyItAppliesToYou: { type: "string" },
+            sourceId: { type: "string", enum: [...sourceIds, "general"] },
+            confidence: { type: "string", enum: CONFIDENCE_ENUM },
+          },
+          required: [
+            "title",
+            "severity",
+            "plainExplanation",
+            "whyItAppliesToYou",
+            "sourceId",
+            "confidence",
+          ],
+        },
+      },
+      preLaunchChecklist: {
+        type: "array",
+        items: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            item: { type: "string" },
+            reason: { type: "string" },
+          },
+          required: ["item", "reason"],
+        },
+      },
+      watchFor: { type: "array", items: { type: "string" } },
+    },
+    required: [
+      "businessSummary",
+      "overallRiskLevel",
+      "assumptions",
+      "risks",
+      "preLaunchChecklist",
+      "watchFor",
+    ],
+  } as const;
+}
+
+const VERIFICATION_SCHEMA = {
   type: "object",
   additionalProperties: false,
   properties: {
-    businessSummary: { type: "string" },
-    overallRiskLevel: { type: "string", enum: SEVERITY_ENUM },
-    risks: {
+    verdicts: {
       type: "array",
       items: {
         type: "object",
         additionalProperties: false,
         properties: {
-          title: { type: "string" },
-          severity: { type: "string", enum: SEVERITY_ENUM },
-          plainExplanation: { type: "string" },
-          whyItAppliesToYou: { type: "string" },
-          source: { type: "string" },
+          index: { type: "integer" },
+          verified: { type: "boolean" },
+          confidence: { type: "string", enum: CONFIDENCE_ENUM },
         },
-        required: [
-          "title",
-          "severity",
-          "plainExplanation",
-          "whyItAppliesToYou",
-          "source",
-        ],
+        required: ["index", "verified", "confidence"],
       },
     },
-    preLaunchChecklist: {
-      type: "array",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        properties: {
-          item: { type: "string" },
-          reason: { type: "string" },
-        },
-        required: ["item", "reason"],
-      },
-    },
-    watchFor: { type: "array", items: { type: "string" } },
   },
-  required: [
-    "businessSummary",
-    "overallRiskLevel",
-    "risks",
-    "preLaunchChecklist",
-    "watchFor",
-  ],
+  required: ["verdicts"],
 } as const;
 
-function buildUserPrompt(input: AnalyzeInput): string {
-  const { context: corpusContext } = retrieveCorpusContext(input);
+// ---------------------------------------------------------------------------
+// Internal shapes
+// ---------------------------------------------------------------------------
 
-  const lines = [
-    "Here is the founder's business. Build their risk map.",
+interface GenRisk {
+  title: string;
+  severity: Severity;
+  plainExplanation: string;
+  whyItAppliesToYou: string;
+  sourceId: string;
+  confidence: Confidence;
+}
+interface GenResult {
+  businessSummary: string;
+  overallRiskLevel: Severity;
+  assumptions: string[];
+  risks: GenRisk[];
+  preLaunchChecklist: { item: string; reason: string }[];
+  watchFor: string[];
+}
+interface Verdict {
+  index: number;
+  verified: boolean;
+  confidence: Confidence;
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function sourcesBlock(sources: KnowledgeEntry[]): string {
+  return sources
+    .map((s) => `[${s.id}] ${s.framework}: ${s.fact}`)
+    .join("\n");
+}
+
+function buildGenerationPrompt(
+  input: AnalyzeInput,
+  sources: KnowledgeEntry[],
+): string {
+  return [
+    "Build the risk map for this founder. Ground every risk in the SOURCES below and cite each one by its id.",
     "",
     "STRUCTURED CONTEXT",
-    `- Country (where they are based / selling from): ${input.country}`,
+    `- Country (based / selling from): ${input.country}`,
     `- Selling platform: ${input.platform}`,
     `- Product type: ${input.productType || "(not specified)"}`,
     `- Sells gift cards or digital goods: ${input.sellsGiftCards ? "YES" : "No"}`,
@@ -91,27 +178,73 @@ function buildUserPrompt(input: AnalyzeInput): string {
     "THEIR OWN WORDS",
     input.description.trim() || "(no free-text description provided)",
     "",
-    corpusContext,
-  ];
-  return lines.join("\n");
+    "SOURCES (cite only from these, by id):",
+    sourcesBlock(sources),
+  ].join("\n");
 }
 
-/** Defensive parse: strip stray markdown fences, then JSON.parse. */
-function parseRiskMap(raw: string): RiskMap {
+function buildVerificationPrompt(
+  gen: GenResult,
+  factById: Map<string, string>,
+): string {
+  const blocks = gen.risks.map((r, i) => {
+    const fact = factById.get(r.sourceId) ?? "(no cited source - general principle)";
+    return [
+      `RISK ${i}`,
+      `Claim: ${r.plainExplanation} ${r.whyItAppliesToYou}`,
+      `Cited source text: ${fact}`,
+    ].join("\n");
+  });
+  return [
+    "Check each risk claim against its cited source text and return one verdict per risk.",
+    "",
+    blocks.join("\n\n"),
+  ].join("\n");
+}
+
+function parseJson<T>(raw: string): T {
   let text = raw.trim();
   if (text.startsWith("```")) {
-    text = text
-      .replace(/^```(?:json)?\s*/i, "")
-      .replace(/\s*```$/i, "")
-      .trim();
+    text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
   }
   const start = text.indexOf("{");
   const end = text.lastIndexOf("}");
-  if (start > 0 || end < text.length - 1) {
-    if (start !== -1 && end !== -1) text = text.slice(start, end + 1);
-  }
-  return JSON.parse(text) as RiskMap;
+  if (start !== -1 && end !== -1) text = text.slice(start, end + 1);
+  return JSON.parse(text) as T;
 }
+
+class RefusalError extends Error {}
+
+async function callStructured<T>(
+  client: Anthropic,
+  opts: {
+    system: string;
+    user: string;
+    schema: unknown;
+    effort: "low" | "medium" | "high";
+    maxTokens: number;
+  },
+): Promise<T> {
+  const message = await client.messages.create({
+    model: MODEL,
+    max_tokens: opts.maxTokens,
+    system: opts.system,
+    messages: [{ role: "user", content: opts.user }],
+    output_config: {
+      effort: opts.effort,
+      format: { type: "json_schema", schema: opts.schema },
+    },
+  } as Anthropic.MessageCreateParamsNonStreaming);
+
+  if (message.stop_reason === "refusal") throw new RefusalError();
+  const block = message.content.find((b) => b.type === "text");
+  if (!block || block.type !== "text") throw new Error("Empty model response");
+  return parseJson<T>(block.text);
+}
+
+// ---------------------------------------------------------------------------
+// Route
+// ---------------------------------------------------------------------------
 
 export async function POST(request: Request) {
   if (!process.env.ANTHROPIC_API_KEY) {
@@ -141,23 +274,82 @@ export async function POST(request: Request) {
     );
   }
 
+  const sources = selectSources(input);
+  const sourceById = new Map(sources.map((s) => [s.id, s]));
+  const factById = new Map(sources.map((s) => [s.id, s.fact]));
   const client = new Anthropic();
 
   try {
-    const message = await client.messages.create({
-      model: MODEL,
-      max_tokens: 4000,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: buildUserPrompt(input) }],
-      // Structured outputs guarantee schema-valid JSON; medium effort keeps the
-      // single-shot generation fast enough for a live demo.
-      output_config: {
-        effort: "medium",
-        format: { type: "json_schema", schema: RISK_MAP_SCHEMA },
-      },
-    } as Anthropic.MessageCreateParamsNonStreaming);
+    // 1) Grounded generation — the model may only cite the provided sources.
+    const gen = await callStructured<GenResult>(client, {
+      system: GENERATION_SYSTEM,
+      user: buildGenerationPrompt(input, sources),
+      schema: generationSchema(sources.map((s) => s.id)),
+      effort: "medium",
+      maxTokens: 4000,
+    });
 
-    if (message.stop_reason === "refusal") {
+    // 2) Verification pass — a second model audits each claim against its source.
+    //    Wrapped so a failure degrades gracefully instead of breaking the request.
+    const verdicts = new Map<number, Verdict>();
+    try {
+      const result = await callStructured<{ verdicts: Verdict[] }>(client, {
+        system: VERIFICATION_SYSTEM,
+        user: buildVerificationPrompt(gen, factById),
+        schema: VERIFICATION_SCHEMA,
+        effort: "low",
+        maxTokens: 1500,
+      });
+      for (const v of result.verdicts) verdicts.set(v.index, v);
+    } catch (err) {
+      console.warn("Verification pass failed; using grounded defaults.", err);
+    }
+
+    // 3) Merge: the server supplies the real source label + URL (the model never
+    //    writes a URL), and the verdict adjusts trust.
+    const risks: RiskMap["risks"] = gen.risks.map((r, i) => {
+      const src = sourceById.get(r.sourceId);
+      const isGeneral = !src;
+      const verdict = verdicts.get(i);
+
+      let verified = !isGeneral;
+      let confidence: Confidence = r.confidence;
+      if (verdict) {
+        if (!verdict.verified) {
+          verified = false;
+          confidence = "low";
+        } else {
+          confidence = verdict.confidence;
+        }
+      }
+      if (isGeneral) {
+        verified = false;
+        confidence = "low";
+      }
+
+      return {
+        title: r.title,
+        severity: r.severity,
+        plainExplanation: r.plainExplanation,
+        whyItAppliesToYou: r.whyItAppliesToYou,
+        source: src ? src.framework : "General compliance principle",
+        sourceUrl: src ? src.url : "",
+        confidence,
+        verified,
+      };
+    });
+
+    const riskMap: RiskMap = {
+      businessSummary: gen.businessSummary,
+      overallRiskLevel: gen.overallRiskLevel,
+      assumptions: gen.assumptions ?? [],
+      risks,
+      preLaunchChecklist: gen.preLaunchChecklist,
+      watchFor: gen.watchFor,
+    };
+    return Response.json(riskMap);
+  } catch (err) {
+    if (err instanceof RefusalError) {
       return Response.json(
         {
           error:
@@ -166,18 +358,6 @@ export async function POST(request: Request) {
         { status: 422 },
       );
     }
-
-    const textBlock = message.content.find((b) => b.type === "text");
-    if (!textBlock || textBlock.type !== "text") {
-      return Response.json(
-        { error: "The model returned an empty response. Please try again." },
-        { status: 502 },
-      );
-    }
-
-    const riskMap = parseRiskMap(textBlock.text);
-    return Response.json(riskMap);
-  } catch (err) {
     if (err instanceof Anthropic.APIError) {
       console.error(`Anthropic API error ${err.status}:`, err.message);
       return Response.json(
