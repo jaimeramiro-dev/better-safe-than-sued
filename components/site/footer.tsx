@@ -52,7 +52,7 @@ export function Footer() {
         <div className="mt-12 border-t border-hair pt-7">
           <p className="max-w-3xl text-[12.5px] leading-relaxed text-muted">
             Better Safe Than Sued provides risk guidance and education for
-            clarity, not legal advice, and using it does not create a
+            clarity, not legal advice. Using it does not create a
             lawyer-client relationship. Always validate important decisions with
             a qualified professional.
           </p>

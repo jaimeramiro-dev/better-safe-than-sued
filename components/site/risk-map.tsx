@@ -269,13 +269,22 @@ export function RiskMapView({ data }: { data: RiskMap }) {
       {/* Persistent disclaimer */}
       <motion.p
         variants={item}
-        className="rounded-lg border border-hair bg-sand/60 px-5 py-4 text-[12.5px] leading-relaxed text-muted"
+        className="rounded-xl border border-hair bg-paper px-5 py-4 text-[12.5px] leading-relaxed text-muted"
       >
-        Every risk is grounded in an official source you can open, and a second
-        model double-checks each claim against that source. This is still
-        guidance for clarity, not legal advice, and reading it does not create a
-        lawyer-client relationship. For anything that carries real money or
-        liability, validate it with a qualified professional before you act.
+        <span className="font-semibold text-foreground">
+          Every risk is grounded in an official source you can open
+        </span>
+        , and a second model double-checks each claim against that source. This
+        is still{" "}
+        <span className="font-semibold text-foreground">
+          guidance for clarity, not legal advice
+        </span>
+        , and reading it does not create a lawyer-client relationship. For
+        anything that carries{" "}
+        <span className="font-semibold text-foreground">
+          real money or liability
+        </span>
+        , validate it with a qualified professional before you act.
       </motion.p>
     </motion.div>
   );
