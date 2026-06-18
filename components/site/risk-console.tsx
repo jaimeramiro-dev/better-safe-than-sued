@@ -61,7 +61,6 @@ export function RiskConsole() {
 
   useEffect(() => {
     if (status !== "loading") return;
-    setStepIdx(0);
     const id = setInterval(
       () => setStepIdx((s) => Math.min(s + 1, LOADING_STEPS.length - 1)),
       1500,
@@ -89,6 +88,7 @@ export function RiskConsole() {
     setStatus("loading");
     setResult(null);
     setError(null);
+    setStepIdx(0);
     requestAnimationFrame(() =>
       outRef.current?.scrollIntoView({
         behavior: reduce ? "auto" : "smooth",
