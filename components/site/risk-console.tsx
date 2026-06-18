@@ -20,6 +20,17 @@ import {
 } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
+const COUNTRY_FLAGS: Record<string, string> = {
+  Spain: "🇪🇸",
+  Germany: "🇩🇪",
+  France: "🇫🇷",
+  Italy: "🇮🇹",
+  Netherlands: "🇳🇱",
+  Ireland: "🇮🇪",
+  Portugal: "🇵🇹",
+  Belgium: "🇧🇪",
+};
+
 const PRODUCT_TYPES = [
   "Gift cards & digital codes",
   "Digital goods / downloads",
@@ -62,7 +73,6 @@ export function RiskConsole() {
 
   useEffect(() => {
     if (status !== "loading") return;
-    setStepIdx(0);
     const id = setInterval(
       () => setStepIdx((s) => Math.min(s + 1, LOADING_STEPS.length - 1)),
       1800,
@@ -90,6 +100,7 @@ export function RiskConsole() {
     setStatus("loading");
     setResult(null);
     setError(null);
+    setStepIdx(0);
     requestAnimationFrame(() =>
       outRef.current?.scrollIntoView({
         behavior: reduce ? "auto" : "smooth",
@@ -151,11 +162,10 @@ export function RiskConsole() {
         />
 
         <div className="mt-3 grid gap-3 sm:grid-cols-3">
-          <Select
+          <CountrySelect
             label="Where you sell from"
             value={country}
             onChange={setCountry}
-            options={[...EU_COUNTRIES]}
           />
           <Select
             label="Platform"
@@ -240,6 +250,70 @@ export function RiskConsole() {
         )}
       </div>
     </div>
+  );
+}
+
+function CountrySelect({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    if (open) document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-[12.5px] font-medium text-muted">
+        {label}
+      </span>
+      <div ref={ref} className="relative">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="flex w-full items-center gap-2.5 rounded-md border border-hair bg-paper py-2.5 pl-3 pr-9 text-[14px] text-ink outline-none transition-colors focus:border-oxblood/50 focus:ring-2 focus:ring-oxblood/12"
+        >
+          <span className="text-base leading-none">{COUNTRY_FLAGS[value]}</span>
+          <span>{value}</span>
+        </button>
+        <ChevronDown
+          size={15}
+          aria-hidden
+          className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted"
+        />
+        {open && (
+          <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-md border border-hair bg-paper shadow-[0_8px_32px_-8px_rgba(27,26,22,0.2)]">
+            {EU_COUNTRIES.map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => {
+                  onChange(c);
+                  setOpen(false);
+                }}
+                className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-[14px] text-left transition-colors hover:bg-sand ${
+                  c === value ? "bg-sand font-medium text-ink" : "text-ink-soft"
+                }`}
+              >
+                <span className="text-base leading-none">{COUNTRY_FLAGS[c]}</span>
+                <span>{c}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </label>
   );
 }
 
