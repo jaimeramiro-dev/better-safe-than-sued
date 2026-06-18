@@ -1,8 +1,16 @@
 "use client";
 
 import { motion, useReducedMotion, type Variants } from "framer-motion";
-import { Check, Eye, ShieldCheck } from "lucide-react";
-import type { RiskMap, Severity } from "@/lib/types";
+import {
+  ArrowUpRight,
+  BadgeCheck,
+  BookOpen,
+  Check,
+  CircleAlert,
+  Eye,
+  ShieldCheck,
+} from "lucide-react";
+import type { Risk, RiskMap, Severity } from "@/lib/types";
 
 const SEV: Record<
   Severity,
@@ -33,6 +41,17 @@ const SEV: Record<
 
 const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
+/** Trust indicator derived from the server's verification verdict. */
+function trustOf(risk: Risk) {
+  if (!risk.verified) {
+    return { label: "Verify this", className: "text-sev-med", Icon: CircleAlert };
+  }
+  if (risk.confidence === "high") {
+    return { label: "Verified source", className: "text-sev-low", Icon: BadgeCheck };
+  }
+  return { label: "Grounded", className: "text-muted", Icon: BadgeCheck };
+}
+
 export function RiskMapView({ data }: { data: RiskMap }) {
   const reduce = useReducedMotion();
 
@@ -46,6 +65,8 @@ export function RiskMapView({ data }: { data: RiskMap }) {
   };
 
   const overall = SEV[data.overallRiskLevel];
+  const verifiedCount = data.risks.filter((r) => r.verified).length;
+  const total = data.risks.length;
 
   return (
     <motion.div
@@ -80,10 +101,26 @@ export function RiskMapView({ data }: { data: RiskMap }) {
         </span>
       </motion.div>
 
+      {/* Trust bar: the anti-hallucination signal */}
+      <motion.div
+        variants={item}
+        className="flex flex-wrap items-center gap-x-5 gap-y-1.5 rounded-lg border border-hair bg-sand/40 px-4 py-2.5 text-[12px] text-muted"
+      >
+        <span className="inline-flex items-center gap-1.5 font-medium text-ink">
+          <BadgeCheck size={14} className="text-sev-low" aria-hidden />
+          {verifiedCount} of {total} risks verified against a cited source
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <BookOpen size={13} className="text-faint" aria-hidden />
+          Grounded in official sources, then double-checked
+        </span>
+      </motion.div>
+
       {/* Risk cards, ordered by the model most-severe first */}
       <div className="flex flex-col gap-3">
         {data.risks.map((risk, i) => {
           const s = SEV[risk.severity];
+          const trust = trustOf(risk);
           return (
             <motion.article
               key={i}
@@ -91,9 +128,7 @@ export function RiskMapView({ data }: { data: RiskMap }) {
               className={`overflow-hidden rounded-lg border ${s.ring} bg-paper`}
             >
               <div className="flex items-start gap-3 border-b border-hair/70 px-5 py-3.5">
-                <span
-                  className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${s.dot}`}
-                />
+                <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${s.dot}`} />
                 <h4 className="flex-1 text-[15.5px] font-semibold leading-snug text-ink">
                   {risk.title}
                 </h4>
@@ -115,10 +150,33 @@ export function RiskMapView({ data }: { data: RiskMap }) {
                     {risk.whyItAppliesToYou}
                   </p>
                 </div>
-                <div className="pt-0.5">
-                  <span className="inline-flex items-center gap-1.5 rounded-pill bg-sand px-2.5 py-1 font-mono text-[11px] text-muted">
-                    <span className="text-faint">Source</span>
-                    {risk.source}
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2 pt-0.5">
+                  {risk.sourceUrl ? (
+                    <a
+                      href={risk.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group inline-flex items-center gap-1.5 rounded-pill bg-sand px-2.5 py-1 font-mono text-[11px] text-muted transition-colors hover:text-ink"
+                    >
+                      <span className="text-faint">Source</span>
+                      {risk.source}
+                      <ArrowUpRight
+                        size={12}
+                        className="text-faint transition-transform group-hover:-translate-y-px group-hover:translate-x-px"
+                        aria-hidden
+                      />
+                    </a>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 rounded-pill bg-sand px-2.5 py-1 font-mono text-[11px] text-muted">
+                      <span className="text-faint">Source</span>
+                      {risk.source}
+                    </span>
+                  )}
+                  <span
+                    className={`inline-flex items-center gap-1 text-[11.5px] font-medium ${trust.className}`}
+                  >
+                    <trust.Icon size={13} aria-hidden />
+                    {trust.label}
                   </span>
                 </div>
               </div>
@@ -180,11 +238,11 @@ export function RiskMapView({ data }: { data: RiskMap }) {
         variants={item}
         className="rounded-lg border border-hair bg-sand/60 px-5 py-4 text-[12.5px] leading-relaxed text-muted"
       >
-        This is guidance for clarity, not legal advice, and reading it does not
-        create a lawyer-client relationship. Every point shows the framework it
-        comes from so you can check it yourself. For anything that carries real
-        money or liability, validate it with a qualified professional before you
-        act.
+        Every risk is grounded in an official source you can open, and a second
+        model double-checks each claim against that source. This is still
+        guidance for clarity, not legal advice, and reading it does not create a
+        lawyer-client relationship. For anything that carries real money or
+        liability, validate it with a qualified professional before you act.
       </motion.p>
     </motion.div>
   );

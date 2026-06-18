@@ -1,6 +1,7 @@
 // Shared contract between the AI route and the UI.
 
 export type Severity = "low" | "medium" | "high";
+export type Confidence = "high" | "medium" | "low";
 
 export interface Risk {
   /** short risk name */
@@ -12,6 +13,14 @@ export interface Risk {
   whyItAppliesToYou: string;
   /** the specific regulation/framework this comes from, e.g. "PSD2 / SCA" */
   source: string;
+  /** official URL for `source`, supplied by the server from the knowledge base
+   *  (never written by the model). Empty when the risk is a general principle
+   *  not backed by a cited source. */
+  sourceUrl: string;
+  /** how well this risk is grounded in its cited source, after verification */
+  confidence: Confidence;
+  /** true when a second model pass confirmed the claim against its cited source */
+  verified: boolean;
 }
 
 export interface ChecklistItem {

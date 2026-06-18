@@ -32,9 +32,10 @@ const PRODUCT_TYPES = [
 
 const LOADING_STEPS = [
   "Reading your business",
-  "Cross-referencing EU regulation",
-  "Checking PSD2 and SCA payment rules",
+  "Retrieving the official rules that apply",
+  "Grounding each risk in a cited source",
   "Mapping fraud and chargeback exposure",
+  "Double-checking every claim against its source",
   "Writing your plain-language risk map",
 ];
 
@@ -64,7 +65,7 @@ export function RiskConsole() {
     setStepIdx(0);
     const id = setInterval(
       () => setStepIdx((s) => Math.min(s + 1, LOADING_STEPS.length - 1)),
-      1500,
+      1800,
     );
     return () => clearInterval(id);
   }, [status]);
