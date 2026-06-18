@@ -2,12 +2,12 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 /*
   Better Safe Than Sued — design tokens.
-  Theme is LOCKED to a single warm-paper light mode (this is the brand, like
-  high-end legal/compliance SaaS). One accent only: oxblood, used for the
-  primary CTA, the wordmark mark, and high-severity flags. The amber/neutral
-  steps exist ONLY as the semantic severity scale inside risk cards.
+  Single warm-paper light mode with a warm-dark alternative accessible via
+  the .dark class toggle. One accent only: oxblood.
   Radius scale: --radius-pill (chips/badges) / 10px (buttons, inputs) / 16px (panels).
 */
 
@@ -19,7 +19,7 @@
   --font-mono: var(--font-geist-mono);
   --font-serif: var(--font-newsreader);
 
-  /* shadcn tokens (kept so any ui/* primitives stay coherent) */
+  /* shadcn tokens */
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -37,27 +37,26 @@
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
 
-  /* BSTS palette */
-  --color-bone: #f2efe7;        /* page background — warm bone */
-  --color-paper: #fbfaf6;       /* elevated surfaces / cards */
-  --color-sand: #ebe7dc;        /* alternating section wash */
-  --color-ink: #1b1a16;         /* primary text — warm near-black */
-  --color-ink-soft: #43403a;    /* strong secondary */
-  --color-muted: #6f6a5f;       /* muted text */
-  --color-faint: #948f82;       /* faintest text / captions */
-  --color-hair: #ded8ca;        /* hairline borders */
+  /* BSTS palette — all reference runtime variables so .dark overrides work */
+  --color-bone: var(--bone);
+  --color-paper: var(--paper);
+  --color-sand: var(--sand);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-muted: var(--muted-text);
+  --color-faint: var(--faint);
+  --color-hair: var(--hair);
 
-  --color-oxblood: #9d2b25;     /* the one accent */
-  --color-oxblood-deep: #861f1a;
-  --color-oxblood-wash: #f4e6e2;
+  --color-oxblood: var(--oxblood);
+  --color-oxblood-deep: var(--oxblood-deep);
+  --color-oxblood-wash: var(--oxblood-wash);
 
-  /* semantic severity scale (functional, not decorative) */
-  --color-sev-high: #9d2b25;
-  --color-sev-high-wash: #f5e7e3;
-  --color-sev-med: #9a6a1c;
-  --color-sev-med-wash: #f3ead4;
-  --color-sev-low: #5f6a52;
-  --color-sev-low-wash: #e9ebdf;
+  --color-sev-high: var(--sev-high);
+  --color-sev-high-wash: var(--sev-high-wash);
+  --color-sev-med: var(--sev-med);
+  --color-sev-med-wash: var(--sev-med-wash);
+  --color-sev-low: var(--sev-low);
+  --color-sev-low-wash: var(--sev-low-wash);
 
   --radius-pill: 999px;
   --radius-sm: 8px;
@@ -86,6 +85,67 @@
   --border: #ded8ca;
   --input: #ded8ca;
   --ring: #9d2b25;
+
+  --bone: #f2efe7;
+  --paper: #fbfaf6;
+  --sand: #ebe7dc;
+  --ink: #1b1a16;
+  --ink-soft: #43403a;
+  --muted-text: #6f6a5f;
+  --faint: #948f82;
+  --hair: #ded8ca;
+
+  --oxblood: #9d2b25;
+  --oxblood-deep: #861f1a;
+  --oxblood-wash: #f4e6e2;
+
+  --sev-high: #9d2b25;
+  --sev-high-wash: #f5e7e3;
+  --sev-med: #9a6a1c;
+  --sev-med-wash: #f3ead4;
+  --sev-low: #5f6a52;
+  --sev-low-wash: #e9ebdf;
+}
+
+.dark {
+  --background: #181612;
+  --foreground: #e4dfd6;
+  --card: #22201b;
+  --card-foreground: #e4dfd6;
+  --popover: #22201b;
+  --popover-foreground: #e4dfd6;
+  --primary: #c8483f;
+  --primary-foreground: #e4dfd6;
+  --secondary: #2e2a24;
+  --secondary-foreground: #e4dfd6;
+  --muted: #2e2a24;
+  --muted-foreground: #979184;
+  --accent: #3b2a25;
+  --accent-foreground: #d55a4f;
+  --destructive: #c8483f;
+  --border: #3a3530;
+  --input: #3a3530;
+  --ring: #c8483f;
+
+  --bone: #181612;
+  --paper: #22201b;
+  --sand: #2e2a24;
+  --ink: #e4dfd6;
+  --ink-soft: #c4bfb4;
+  --muted-text: #979184;
+  --faint: #736e62;
+  --hair: #3a3530;
+
+  --oxblood: #c8483f;
+  --oxblood-deep: #b03a32;
+  --oxblood-wash: #3b2a25;
+
+  --sev-high: #d55a4f;
+  --sev-high-wash: #3b2a25;
+  --sev-med: #d4a04a;
+  --sev-med-wash: #3a2e14;
+  --sev-low: #8a9a7a;
+  --sev-low-wash: #232a1e;
 }
 
 @layer base {
@@ -98,6 +158,9 @@
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
+  html.dark {
+    color-scheme: dark;
+  }
   body {
     @apply bg-background text-foreground antialiased;
   }
@@ -107,6 +170,10 @@
   ::selection {
     background: #9d2b25;
     color: #fbfaf6;
+  }
+  .dark ::selection {
+    background: #c8483f;
+    color: #181612;
   }
 }
 
@@ -123,16 +190,15 @@
   .font-serif {
     font-family: var(--font-newsreader), Georgia, "Times New Roman", serif;
   }
-  /* faint engraved-paper grid for the hero backdrop */
   .grid-faint {
     background-image: linear-gradient(
         to right,
-        color-mix(in srgb, var(--color-ink) 4%, transparent) 1px,
+        color-mix(in srgb, var(--ink) 4%, transparent) 1px,
         transparent 1px
       ),
       linear-gradient(
         to bottom,
-        color-mix(in srgb, var(--color-ink) 4%, transparent) 1px,
+        color-mix(in srgb, var(--ink) 4%, transparent) 1px,
         transparent 1px
       );
     background-size: 60px 60px;
