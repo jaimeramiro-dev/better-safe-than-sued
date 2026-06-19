@@ -94,7 +94,11 @@ export function RiskConsole() {
   async function run(input: AnalyzeInput) {
     setHint(null);
     if (!input.description.trim() && !input.productType.trim()) {
-      setHint("Tell us what you sell first, or try the example.");
+      setHint("Describe your business or select a product type before mapping risks.");
+      return;
+    }
+    if (!input.description.trim()) {
+      setHint("Tell us what you sell in your own words first.");
       return;
     }
     setStatus("loading");
