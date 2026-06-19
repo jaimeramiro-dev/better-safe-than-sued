@@ -24,7 +24,11 @@ const severitySchema = z.enum(["low", "medium", "high"]);
 const confidenceSchema = z.enum(["high", "medium", "low"]);
 
 const analyzeInputSchema = z.object({
-  description: z.string().trim().min(1, "Tell us what you sell."),
+  description: z
+    .string()
+    .trim()
+    .min(1, "Tell us what you sell.")
+    .regex(/[\p{L}\p{N}]/u, "Tell us what you sell using actual words, not just symbols."),
   country: z.string().trim().min(1, "Select your country."),
   platform: z.string().trim().min(1, "Select your selling platform."),
   productType: z.string(),
