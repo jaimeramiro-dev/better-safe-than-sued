@@ -319,6 +319,17 @@ async function callStructured<T>(
 }
 
 // ---------------------------------------------------------------------------
+// In-memory cache for repeated requests (e.g. the gift-card example)
+// ---------------------------------------------------------------------------
+
+const responseCache = new Map<string, RiskMap>();
+const MAX_CACHE = 50;
+
+function cacheKey(input: AnalyzeInput): string {
+  return JSON.stringify(input);
+}
+
+// ---------------------------------------------------------------------------
 // Route
 // ---------------------------------------------------------------------------
 
@@ -355,6 +366,10 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
+
+  const key = cacheKey(input);
+  const cached = responseCache.get(key);
+  if (cached) return Response.json(cached);
 
   const sources = selectSources(input);
   const sourceById = new Map(sources.map((s) => [s.id, s]));
@@ -432,6 +447,11 @@ export async function POST(request: Request) {
       watchFor: gen.watchFor,
     };
     riskMapSchema.parse(riskMap);
+    if (responseCache.size >= MAX_CACHE) {
+      const first = responseCache.keys().next().value;
+      if (first) responseCache.delete(first);
+    }
+    responseCache.set(key, riskMap);
     return Response.json(riskMap);
   } catch (err) {
     if (err instanceof RefusalError) {

@@ -133,14 +133,23 @@ export function RiskConsole() {
     run(currentInput());
   }
 
-  function loadExample() {
+  async function loadExample() {
     setDescription(SAMPLE_INPUT.description);
     setCountry(SAMPLE_INPUT.country);
     setPlatform(SAMPLE_INPUT.platform);
     setProductType(SAMPLE_INPUT.productType);
     setSellsGiftCards(SAMPLE_INPUT.sellsGiftCards);
     setAcceptsCards(SAMPLE_INPUT.acceptsCards);
-    run(SAMPLE_INPUT);
+
+    try {
+      const res = await fetch("/examples/gift-card-risk-map.json");
+      if (!res.ok) throw new Error("Cached example not available");
+      const data = await res.json();
+      setResult(data as RiskMap);
+      setStatus("done");
+    } catch {
+      run(SAMPLE_INPUT);
+    }
   }
 
   const busy = status === "loading";

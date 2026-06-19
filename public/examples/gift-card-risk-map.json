@@ -1,0 +1,101 @@
+{
+  "businessSummary": "Two-person Spain-based Shopify store selling digital gift cards and game top-up codes to EU customers, paid by card, delivered instantly by email, with no formal company structure yet.",
+  "overallRiskLevel": "high",
+  "assumptions": [
+    "We assumed you charge customers directly through Shopify Payments, meaning you are the merchant of record and bear chargeback liability.",
+    "We assumed you have not yet registered for VAT in any EU member state where your customers live.",
+    "We assumed you have not yet drafted terms of service or a privacy policy for your store."
+  ],
+  "risks": [
+    {
+      "title": "Chargeback liability for instant-delivery digital goods",
+      "severity": "high",
+      "plainExplanation": "When a customer pays by card and receives the gift card or game code instantly, the transaction is irrevocable from your side. But the customer can dispute the charge with their bank for up to 120 days. Because you deliver digital goods immediately, you have no chance to cancel fulfillment. Every chargeback is a total loss of the product plus a fee.",
+      "whyItAppliesToYou": "You sell digital gift cards and top-up codes delivered instantly by email, and you accept card payments as the merchant of record through Shopify. This is the highest-risk category for chargebacks.",
+      "source": "PSD2 / SCA & Chargeback Rules",
+      "sourceUrl": "",
+      "confidence": "high",
+      "verified": true
+    },
+    {
+      "title": "No legal entity means personal liability for debts and disputes",
+      "severity": "high",
+      "plainExplanation": "Without a registered company (SL, SA, or similar), you and your co-founder are personally liable for every chargeback, refund, fine, or legal claim. Creditors can go after your personal assets.",
+      "whyItAppliesToYou": "You said you haven't set up a company yet. If you start selling before incorporating, every obligation falls on you personally.",
+      "source": "General compliance principle",
+      "sourceUrl": "",
+      "confidence": "high",
+      "verified": false
+    },
+    {
+      "title": "Cross-border EU VAT registration and reporting",
+      "severity": "high",
+      "plainExplanation": "When you sell to consumers in other EU countries, you may need to charge their local VAT rate and file returns. The EU's One-Stop Shop (OSS) simplifies this, but you still need to register and file quarterly.",
+      "whyItAppliesToYou": "You sell to 'customers across the EU'. Each cross-border sale may trigger VAT obligations in the buyer's country unless you use the OSS scheme correctly.",
+      "source": "EU VAT Directive / OSS",
+      "sourceUrl": "",
+      "confidence": "medium",
+      "verified": true
+    },
+    {
+      "title": "No right of withdrawal exemption for digital content",
+      "severity": "medium",
+      "plainExplanation": "EU consumer law gives buyers a 14-day right of withdrawal. For digital content and gift cards, you can waive this right only if the customer expressly agrees before download and you provide a clear notice. Without the right wording at checkout, customers can cancel and demand a refund even after receiving the code.",
+      "whyItAppliesToYou": "You sell digital codes delivered instantly. If your checkout doesn't include the proper waiver notice and consent checkbox, customers have 14 days to change their minds.",
+      "source": "EU Consumer Rights Directive 2011/83/EU",
+      "sourceUrl": "",
+      "confidence": "high",
+      "verified": true
+    },
+    {
+      "title": "Data protection obligations for customer email addresses",
+      "severity": "medium",
+      "plainExplanation": "Collecting customer email addresses for delivery means you process personal data. GDPR requires you to have a privacy policy, a lawful basis for processing, and to handle deletion requests. Fines can reach 20M EUR or 4% of revenue.",
+      "whyItAppliesToYou": "You collect names and email addresses to deliver each purchase. Even with just two people, GDPR applies if you serve EU customers.",
+      "source": "GDPR Art. 5, 6, 17",
+      "sourceUrl": "",
+      "confidence": "high",
+      "verified": true
+    },
+    {
+      "title": "Strong Customer Authentication (SCA) friction",
+      "severity": "medium",
+      "plainExplanation": "PSD2 requires SCA for most EU card payments. While Shopify Payments handles the technical side, some transactions may be declined or require additional authentication steps, increasing checkout abandonment.",
+      "whyItAppliesToYou": "Your customers pay by credit or debit card from across the EU. SCA applies to most of these payments, and exemption rules for low-value or recurring transactions may not cover instant digital deliveries.",
+      "source": "PSD2 / SCA & Chargeback Rules",
+      "sourceUrl": "",
+      "confidence": "high",
+      "verified": true
+    }
+  ],
+  "preLaunchChecklist": [
+    {
+      "item": "Register a legal entity (SL, SLU, or equivalent)",
+      "reason": "Separates your personal assets from business liabilities before you start selling."
+    },
+    {
+      "item": "Sign up for the EU One-Stop Shop (OSS) VAT scheme",
+      "reason": "Lets you file a single quarterly return for all cross-border EU sales instead of registering in every country."
+    },
+    {
+      "item": "Add a right-of-withdrawal waiver notice at checkout",
+      "reason": "A checkbox and clear statement that the customer loses their 14-day refund right once the digital code is delivered."
+    },
+    {
+      "item": "Publish a privacy policy covering customer email collection",
+      "reason": "Required by GDPR before you collect any personal data. Include lawful basis, retention, and deletion rights."
+    },
+    {
+      "item": "Review Shopify Payments chargeback protection options",
+      "reason": "Shopify offers chargeback protection for eligible transactions — enable it given your instant-delivery model."
+    }
+  ],
+  "watchFor": [
+    "Chargeback rate spikes after holiday promotions or new customer cohorts",
+    "OSS filing deadlines — quarterly across different EU member states",
+    "Customer deletion or access requests under GDPR",
+    "Changes to Shopify Payments' SCA exemption rules for digital goods",
+    "Any single large order from a new customer (common fraud pattern for digital codes)",
+    "Email delivery failures that cause customers to claim non-receipt"
+  ]
+}
