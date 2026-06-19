@@ -24,9 +24,13 @@ const severitySchema = z.enum(["low", "medium", "high"]);
 const confidenceSchema = z.enum(["high", "medium", "low"]);
 
 const analyzeInputSchema = z.object({
-  description: z.string(),
-  country: z.string(),
-  platform: z.string(),
+  description: z
+    .string()
+    .trim()
+    .min(1, "Tell us what you sell.")
+    .regex(/[\p{L}\p{N}]/u, "Tell us what you sell using actual words, not just symbols."),
+  country: z.string().trim().min(1, "Select your country."),
+  platform: z.string().trim().min(1, "Select your selling platform."),
   productType: z.string(),
   sellsGiftCards: z.boolean(),
   acceptsCards: z.boolean(),
@@ -332,7 +336,13 @@ export async function POST(request: Request) {
   let input: AnalyzeInput;
   try {
     input = analyzeInputSchema.parse(await request.json());
-  } catch {
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return Response.json(
+        { error: err.issues.map((e) => e.message).join(" ") },
+        { status: 400 },
+      );
+    }
     return Response.json({ error: "Invalid request body." }, { status: 400 });
   }
 

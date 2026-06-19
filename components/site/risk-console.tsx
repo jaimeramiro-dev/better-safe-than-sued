@@ -93,8 +93,13 @@ export function RiskConsole() {
 
   async function run(input: AnalyzeInput) {
     setHint(null);
-    if (!input.description.trim() && !input.productType.trim()) {
-      setHint("Tell us what you sell first, or try the example.");
+    const hasWords = (s: string) => /[\p{L}\p{N}]/u.test(s.trim());
+    if (!hasWords(input.description) && !input.productType.trim()) {
+      setHint("Describe your business or select a product type before mapping risks.");
+      return;
+    }
+    if (!hasWords(input.description)) {
+      setHint("Tell us what you sell using actual words, not just symbols.");
       return;
     }
     setStatus("loading");
