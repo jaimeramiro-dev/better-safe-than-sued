@@ -22,6 +22,11 @@ const POINTS: { icon: LucideIcon; title: string; body: string }[] = [
     title: "The decision stays human",
     body: "We map the risk. You make the call.",
   },
+  {
+  icon: UserCheck,
+  title: "Smart Escalation",
+  body: "When a case falls outside the scope of AI assistance, we'll recommend a legal professional who can provide personalized advice."
+}
 ];
 
 export function ResponsibleAI() {

@@ -5,7 +5,6 @@ import { jsPDF } from "jspdf";
 import {
   ArrowUpRight,
   BadgeCheck,
-  BookOpen,
   Check,
   CircleAlert,
   CircleHelp,
@@ -155,8 +154,7 @@ export function RiskMapView({ data }: { data: RiskMap }) {
   };
 
   const overall = SEV[data.overallRiskLevel];
-  const verifiedCount = data.risks.filter((r) => r.verified).length;
-  const total = data.risks.length;
+
 
   return (
     <motion.div
@@ -251,20 +249,6 @@ export function RiskMapView({ data }: { data: RiskMap }) {
         </motion.div>
       ) : (
         <>
-          {/* Trust bar: the anti-hallucination signal */}
-          <motion.div
-            variants={item}
-            className="flex flex-wrap items-center gap-x-5 gap-y-1.5 rounded-lg border border-hair bg-sand/40 px-4 py-2.5 text-[12px] text-muted"
-          >
-            <span className="inline-flex items-center gap-1.5 font-medium text-ink">
-              <BadgeCheck size={14} className="text-sev-low" aria-hidden />
-              {verifiedCount} of {total} risks verified against a cited source
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <BookOpen size={13} className="text-faint" aria-hidden />
-              Grounded in official sources, then double-checked
-            </span>
-          </motion.div>
 
           {/* What we assumed — surfaced so the founder can confirm or correct it */}
           {data.assumptions.length > 0 && (
