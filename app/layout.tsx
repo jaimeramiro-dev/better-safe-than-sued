@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Newsreader } from "next/font/google";
 import localFont from "next/font/local";
+import Script from "next/script";
 import "./globals.css";
 
 const satoshi = localFont({
@@ -75,12 +76,12 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} ${satoshi.variable} h-full antialiased`}
     >
-      <head>
-        <script
+      <body className="min-h-full flex flex-col bg-background text-foreground">
+        <Script
+          id="bsts-theme"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{ __html: INLINE_THEME_SCRIPT }}
         />
-      </head>
-      <body className="min-h-full flex flex-col bg-background text-foreground">
         {children}
       </body>
     </html>

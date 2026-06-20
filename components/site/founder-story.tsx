@@ -53,8 +53,8 @@ export function FounderStory() {
     <section id="story" className="border-b border-hair bg-paper">
       <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
         <div className="max-w-2xl">
-          <p className="text-[20px] font-medium uppercase tracking-[0.17em] text-oxblood">
-            Why this exists ?
+          <p className="text-[12px] font-medium uppercase tracking-[0.18em] text-oxblood">
+            Why this exists
           </p>
           <h2 className="mt-4 text-balance font-serif text-[2rem] font-medium leading-[1.12] tracking-[-0.01em] text-ink sm:text-[2.6rem]">
             We learned this the expensive way. Our store was called Sharkiez.

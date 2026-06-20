@@ -155,6 +155,8 @@ export function RiskMapView({ data }: { data: RiskMap }) {
   };
 
   const overall = SEV[data.overallRiskLevel];
+  const verifiedCount = data.risks.filter((r) => r.verified).length;
+  const total = data.risks.length;
 
   return (
     <motion.div
@@ -181,24 +183,22 @@ export function RiskMapView({ data }: { data: RiskMap }) {
             </p>
           </div>
         </div>
-        <span
-          className={`inline-flex shrink-0 items-center gap-2 self-start rounded-pill border ${overall.ring} ${overall.wash} px-3 py-1.5 text-[13px] font-medium ${overall.text}`}
-        >
-          <span className={`h-1.5 w-1.5 rounded-full ${overall.dot}`} />
-          {overall.label} overall risk
-        </span>
-      </motion.div>
-
-      {/* Trust bar: the anti-hallucination signal */}
-      <motion.div
-        variants={item}
-        className="flex flex-wrap items-center gap-x-5 gap-y-1.5 rounded-lg border border-hair bg-sand/40 px-4 py-2.5 text-[12px] text-muted"
-      >
-        
-        <span className="inline-flex items-center gap-1.5">
-          <BookOpen size={13} className="text-faint" aria-hidden />
-          Grounded in official sources, then double-checked
-        </span>
+        <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
+          <span
+            className={`inline-flex items-center gap-2 rounded-pill border ${overall.ring} ${overall.wash} px-3 py-1.5 text-[13px] font-medium ${overall.text}`}
+          >
+            <span className={`h-1.5 w-1.5 rounded-full ${overall.dot}`} />
+            {overall.label} overall risk
+          </span>
+          <button
+            type="button"
+            onClick={() => downloadPdf(data)}
+            className="inline-flex items-center gap-1.5 rounded-md border border-hair bg-paper px-2.5 py-1 text-[12px] font-medium text-muted transition-colors hover:border-ink/20 hover:text-ink"
+          >
+            <FileDown size={13} aria-hidden />
+            Download PDF
+          </button>
+        </div>
       </motion.div>
 
       {data.referToLawyer ? (
@@ -256,7 +256,10 @@ export function RiskMapView({ data }: { data: RiskMap }) {
             variants={item}
             className="flex flex-wrap items-center gap-x-5 gap-y-1.5 rounded-lg border border-hair bg-sand/40 px-4 py-2.5 text-[12px] text-muted"
           >
-            
+            <span className="inline-flex items-center gap-1.5 font-medium text-ink">
+              <BadgeCheck size={14} className="text-sev-low" aria-hidden />
+              {verifiedCount} of {total} risks verified against a cited source
+            </span>
             <span className="inline-flex items-center gap-1.5">
               <BookOpen size={13} className="text-faint" aria-hidden />
               Grounded in official sources, then double-checked

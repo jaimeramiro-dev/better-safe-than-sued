@@ -12,6 +12,7 @@ const PROOF: RiskMap = {
   businessSummary:
     "You sell gift cards and digital codes to EU consumers from Spain on Shopify, paid by card and delivered instantly, with no company set up yet.",
   overallRiskLevel: "high",
+  referToLawyer: false,
   assumptions: [
     "We assumed you are the merchant of record: you charge the customer's card on Shopify and deliver the codes yourself.",
     "We assumed the codes are delivered instantly and digitally, so they can't be recalled once sent.",
@@ -24,6 +25,7 @@ const PROOF: RiskMap = {
         "Most EU online card payments must use two-factor authentication, usually 3D Secure. Skipping it where it is required lets the bank decline the payment and shifts fraud liability to you.",
       whyItAppliesToYou:
         "You take card payments from EU shoppers, so SCA applies to your checkout.",
+      evidence: ["Accepts card payments", "Sells to EU consumers"],
       source: "PSD2 / Strong Customer Authentication",
       sourceUrl: "https://eur-lex.europa.eu/eli/dir/2015/2366/oj",
       confidence: "high",
@@ -36,6 +38,11 @@ const PROOF: RiskMap = {
         "Instantly-delivered codes can't be recalled, and you rarely win a fraud dispute because there is no proof the real cardholder received them. You lose the order value and a dispute fee every time.",
       whyItAppliesToYou:
         "Gift cards delivered by email are exactly what fraud rings buy with stolen cards and resell.",
+      evidence: [
+        "Sells gift cards / digital codes",
+        "Delivered instantly",
+        "Accepts card payments",
+      ],
       source: "Card-network chargeback rules (digital goods)",
       sourceUrl: VISA_RULES,
       confidence: "high",
@@ -48,6 +55,10 @@ const PROOF: RiskMap = {
         "Visa and Mastercard run dispute-monitoring programs. If your dispute ratio passes their thresholds, your processor can fine you and shut down your ability to accept cards.",
       whyItAppliesToYou:
         "A wave of stolen-card chargebacks on gift cards can push you past those thresholds fast.",
+      evidence: [
+        "High chargeback exposure on digital goods",
+        "Accepts card payments",
+      ],
       source: "Visa Dispute Monitoring Program (VDMP)",
       sourceUrl: VISA_RULES,
       confidence: "medium",
@@ -60,6 +71,7 @@ const PROOF: RiskMap = {
         "Trading from Spain normally means registering as autónomo or forming an SL. Without a company, chargebacks and debts can fall on you personally rather than on the business.",
       whyItAppliesToYou:
         "You are taking real money from Spain with no company set up yet.",
+      evidence: ["Based in Spain", "No company set up yet"],
       source: "Spain: business registration (Hacienda + Seguridad Social)",
       sourceUrl: "https://sede.agenciatributaria.gob.es",
       confidence: "medium",
