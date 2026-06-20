@@ -280,39 +280,9 @@ export function RiskMapView({ data }: { data: RiskMap }) {
                   These risks depend on the reading below. If any of it is wrong,
                   edit your description and map again.
                 </p>
-                <div>
-                  <p className="text-[12.5px] font-medium text-muted">
-                    Why this applies to you
-                  </p>
-                  <p className="mt-1 text-[14px] leading-relaxed text-ink-soft">
-                    {risk.whyItAppliesToYou}
-                  </p>
-                </div>
-                {risk.evidence && risk.evidence.length > 0 && (
-                  <div>
-                    <p className="text-[12.5px] font-medium text-muted">
-                      Evidence
-                    </p>
-                    <ul className="mt-1.5 flex flex-wrap gap-1.5">
-                      {risk.evidence.map((e, i) => (
-                        <li
-                          key={i}
-                          className="rounded-md bg-sev-med-wash px-2.5 py-1 text-[12.5px] text-ink-soft"
-                        >
-                          {e}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-2 pt-0.5">
-                  {risk.sourceUrl ? (
-                    <a
-                      href={risk.sourceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group inline-flex items-center gap-1.5 rounded-pill bg-sand px-2.5 py-1 font-mono text-[11px] text-muted transition-colors hover:text-ink"
-                    >
+                <ul className="mt-1.5 space-y-2">
+                  {data.assumptions.map((a, i) => (
+                    <li key={i} className="flex gap-2.5 text-[13.5px] leading-relaxed text-ink-soft">
                       <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-muted/50" />
                       {a}
                     </li>
