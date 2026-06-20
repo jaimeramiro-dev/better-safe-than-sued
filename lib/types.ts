@@ -11,6 +11,8 @@ export interface Risk {
   plainExplanation: string;
   /** ties the risk to the specific business they described */
   whyItAppliesToYou: string;
+  /** specific factors that triggered this risk — shows the user WHY it applies */
+  evidence: string[];
   /** the specific regulation/framework this comes from, e.g. "PSD2 / SCA" */
   source: string;
   /** official URL for `source`, supplied by the server from the knowledge base

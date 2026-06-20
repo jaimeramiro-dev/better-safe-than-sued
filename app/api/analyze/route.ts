@@ -41,6 +41,7 @@ const genRiskSchema = z.object({
   severity: severitySchema,
   plainExplanation: z.string(),
   whyItAppliesToYou: z.string(),
+  evidence: z.array(z.string()),
   sourceId: z.string(),
   confidence: confidenceSchema,
 });
@@ -71,6 +72,7 @@ const riskSchema = z.object({
   severity: severitySchema,
   plainExplanation: z.string(),
   whyItAppliesToYou: z.string(),
+  evidence: z.array(z.string()),
   source: z.string(),
   sourceUrl: z.string(),
   confidence: confidenceSchema,
@@ -111,6 +113,8 @@ NON-NEGOTIABLE RULES
 
 OUTPUT: the risks that genuinely apply to this specific business, most-severe first (usually 5 to 7; do not pad with generic risks). overallRiskLevel reflects the worst realistic exposure given what they actually described. preLaunchChecklist has 3-6 concrete setup actions that fit their business. watchFor has 3-6 short, specific red flags relevant to them.
 
+EVIDENCE: Each risk must include an "evidence" array of 2-4 short, concrete reasons (each 1-5 words) that explain which specific aspects of THIS business trigger the risk. Examples: "Digital goods", "Subscription billing", "Cross-border sales", "Merchant of record", "Instant delivery", "High-value items", "Platform payout model". These help the founder see exactly why the risk applies to them.
+
 ASSUMPTIONS: in "assumptions", list the 2-4 inferences you had to make because their description was incomplete or ambiguous and that most affect the risks (for example what exactly they sell, or whether THEY charge the customer's card versus a platform doing it). Phrase each as a short statement they can confirm or correct, e.g. "We assumed you charge customers directly through Shopify, not via Roblox." Do not list things they stated explicitly. Use an empty list only if nothing important had to be assumed.`;
 
 const VERIFICATION_SYSTEM = `You are a strict fact-checker for a compliance tool. You are given risk claims and the exact source text each one cites. For every risk, decide whether the cited source actually supports the claim.
@@ -142,6 +146,7 @@ function generationSchema(sourceIds: string[]) {
             severity: { type: "string", enum: SEVERITY_ENUM },
             plainExplanation: { type: "string" },
             whyItAppliesToYou: { type: "string" },
+            evidence: { type: "array", items: { type: "string" } },
             sourceId: { type: "string", enum: [...sourceIds, "general"] },
             confidence: { type: "string", enum: CONFIDENCE_ENUM },
           },
@@ -150,6 +155,7 @@ function generationSchema(sourceIds: string[]) {
             "severity",
             "plainExplanation",
             "whyItAppliesToYou",
+            "evidence",
             "sourceId",
             "confidence",
           ],
@@ -210,6 +216,7 @@ interface GenRisk {
   severity: Severity;
   plainExplanation: string;
   whyItAppliesToYou: string;
+  evidence: string[];
   sourceId: string;
   confidence: Confidence;
 }
@@ -431,6 +438,7 @@ export async function POST(request: Request) {
         severity: r.severity,
         plainExplanation: r.plainExplanation,
         whyItAppliesToYou: r.whyItAppliesToYou,
+        evidence: r.evidence,
         source: src ? src.framework : "General compliance principle",
         sourceUrl: src ? src.url : "",
         confidence,
