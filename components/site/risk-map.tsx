@@ -107,10 +107,7 @@ export function RiskMapView({ data }: { data: RiskMap }) {
         variants={item}
         className="flex flex-wrap items-center gap-x-5 gap-y-1.5 rounded-lg border border-hair bg-sand/40 px-4 py-2.5 text-[12px] text-muted"
       >
-        <span className="inline-flex items-center gap-1.5 font-medium text-ink">
-          <BadgeCheck size={14} className="text-sev-low" aria-hidden />
-          {verifiedCount} of {total} risks verified against a cited source
-        </span>
+        
         <span className="inline-flex items-center gap-1.5">
           <BookOpen size={13} className="text-faint" aria-hidden />
           Grounded in official sources, then double-checked
