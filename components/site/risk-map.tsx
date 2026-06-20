@@ -183,6 +183,23 @@ export function RiskMapView({ data }: { data: RiskMap }) {
                     {risk.whyItAppliesToYou}
                   </p>
                 </div>
+                {risk.evidence && risk.evidence.length > 0 && (
+                  <div>
+                    <p className="text-[12.5px] font-medium text-muted">
+                      Evidence
+                    </p>
+                    <ul className="mt-1.5 flex flex-wrap gap-1.5">
+                      {risk.evidence.map((e, i) => (
+                        <li
+                          key={i}
+                          className="rounded-md bg-sev-med-wash px-2.5 py-1 text-[12.5px] text-ink-soft"
+                        >
+                          {e}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-2 pt-0.5">
                   {risk.sourceUrl ? (
                     <a
