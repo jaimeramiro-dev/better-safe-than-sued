@@ -4,7 +4,6 @@ import { useEffect, useId, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   ArrowRight,
-  Check,
   ChevronDown,
   LoaderCircle,
   Sparkles,
@@ -68,6 +67,7 @@ export function RiskConsole() {
   const [error, setError] = useState<string | null>(null);
   const [stepIdx, setStepIdx] = useState(0);
   const [hint, setHint] = useState<string | null>(null);
+  const [showExample, setShowExample] = useState(false);
 
   const outRef = useRef<HTMLDivElement>(null);
 
@@ -158,26 +158,52 @@ export function RiskConsole() {
     <div id="try" className="scroll-mt-24">
       <form
         onSubmit={onSubmit}
-        className="rounded-xl border border-hair bg-paper p-4 shadow-[0_1px_0_rgba(27,26,22,0.03),0_22px_48px_-30px_rgba(27,26,22,0.28)] sm:p-5"
+        className="rounded-xl border border-hair bg-paper px-6 py-7 font-satoshi shadow-[0_1px_0_rgba(27,26,22,0.03),0_22px_48px_-30px_rgba(27,26,22,0.28)] sm:px-8 sm:py-8"
       >
-        <label
-          htmlFor={descId}
-          className="block text-[13px] font-medium text-ink-soft"
-        >
-          Describe your business
-        </label>
-        <textarea
-          id={descId}
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={4}
-          placeholder="What you sell, where, to whom, on what platform, and how you take payment. A sentence or two is plenty."
-          className="mt-2 w-full resize-none rounded-md border border-hair bg-bone/50 px-3.5 py-3 text-[14.5px] leading-relaxed text-ink outline-none transition-colors placeholder:text-faint focus:border-oxblood/50 focus:bg-paper focus:ring-2 focus:ring-oxblood/12"
-        />
+        {/* --- Description --- */}
+        <div>
+          <label
+            htmlFor={descId}
+            className="block text-[13px] font-medium text-ink-soft"
+          >
+            Describe your business
+          </label>
+          <textarea
+            id={descId}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={4}
+            placeholder="What you sell, where, to whom, and how you take payment. A sentence or two is plenty."
+            className="mt-2 w-full resize-none rounded-lg border border-hair bg-bone/40 px-4 py-3 text-[16px] leading-relaxed text-ink outline-none transition-all placeholder:text-faint/70 hover:border-ink/15 focus:border-oxblood/40 focus:bg-paper focus:ring-[3px] focus:ring-oxblood/8"
+          />
+          <button
+            type="button"
+            onClick={() => setShowExample((v) => !v)}
+            className="mt-1.5 inline-flex items-center gap-1 text-[12px] text-muted transition-colors hover:text-ink-soft"
+          >
+            <Sparkles size={12} aria-hidden />
+            {showExample ? "Hide example" : "Show an example"}
+          </button>
+          {showExample && (
+            <motion.div
+              initial={reduce ? false : { opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+              className="mt-2 rounded-lg border border-hair bg-sand/30 px-4 py-3 text-[13px] leading-relaxed text-muted"
+            >
+              &ldquo;We sell digital gift cards and game top-up codes through a
+              Shopify store, mostly to customers across the EU. Everything is
+              paid by credit or debit card and delivered instantly by email.
+              It&apos;s just two of us and we haven&apos;t set up a company
+              yet.&rdquo;
+            </motion.div>
+          )}
+        </div>
 
-        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+        {/* --- Dropdowns --- */}
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
           <CountrySelect
-            label="Where you sell from"
+            label="Country"
             value={country}
             onChange={setCountry}
           />
@@ -196,23 +222,26 @@ export function RiskConsole() {
           />
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Toggle
+        {/* --- Toggles --- */}
+        <div className="mt-6 space-y-3">
+          <ToggleSwitch
+            label="Sells gift cards or digital goods"
             active={sellsGiftCards}
             onClick={() => setSellsGiftCards((v) => !v)}
-          >
-            Sells gift cards / digital goods
-          </Toggle>
-          <Toggle active={acceptsCards} onClick={() => setAcceptsCards((v) => !v)}>
-            Accepts card payments
-          </Toggle>
+          />
+          <ToggleSwitch
+            label="Accepts card payments"
+            active={acceptsCards}
+            onClick={() => setAcceptsCards((v) => !v)}
+          />
         </div>
 
-        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+        {/* --- Actions --- */}
+        <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
           <button
             type="submit"
             disabled={busy}
-            className="group inline-flex items-center justify-center gap-2 rounded-md bg-oxblood px-5 py-3 text-[14.5px] font-medium text-paper transition-[transform,background-color] duration-150 hover:bg-oxblood-deep active:translate-y-px disabled:opacity-70"
+            className="group inline-flex items-center justify-center gap-2 rounded-lg border border-oxblood bg-oxblood px-5 py-2.5 text-[14.5px] font-medium text-white shadow-[0_1px_2px_rgba(157,43,37,0.12)] transition-all hover:bg-oxblood-deep hover:shadow-[0_2px_6px_rgba(157,43,37,0.2)] active:translate-y-px disabled:opacity-60 disabled:shadow-none"
           >
             {busy ? (
               <>
@@ -221,7 +250,7 @@ export function RiskConsole() {
                   className="animate-spin motion-reduce:animate-none"
                   aria-hidden
                 />
-                Mapping…
+                Mapping risks…
               </>
             ) : (
               <>
@@ -238,17 +267,19 @@ export function RiskConsole() {
             type="button"
             onClick={loadExample}
             disabled={busy}
-            className="inline-flex items-center justify-center gap-2 rounded-md border border-hair bg-paper px-4 py-3 text-[14px] font-medium text-ink-soft transition-colors hover:border-ink/20 hover:text-ink disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-hair bg-paper px-4 py-2.5 text-[14px] font-medium text-muted transition-colors hover:border-ink/15 hover:text-ink-soft disabled:opacity-60"
           >
-            <Sparkles size={15} className="text-oxblood" aria-hidden />
-            Try the gift-card example
+            <Sparkles size={14} className="text-oxblood/70" aria-hidden />
+            Gift-card demo
           </button>
         </div>
 
-        {hint && <p className="mt-2.5 text-[13px] text-sev-high">{hint}</p>}
+        {hint && (
+          <p className="mt-3.5 text-[13px] text-sev-high/90">{hint}</p>
+        )}
       </form>
 
-      <div ref={outRef} aria-live="polite" className="mt-4 scroll-mt-24">
+      <div ref={outRef} aria-live="polite" className="mt-5 scroll-mt-24">
         {status === "loading" && <LoadingPanel stepIdx={stepIdx} />}
         {status === "error" && (
           <ErrorPanel msg={error} onRetry={() => run(currentInput())} />
@@ -266,6 +297,10 @@ export function RiskConsole() {
     </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// CountrySelect — custom dropdown with flag
+// ---------------------------------------------------------------------------
 
 function CountrySelect({
   label,
@@ -289,25 +324,26 @@ function CountrySelect({
 
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[12.5px] font-medium text-muted">
+      <span className="mb-1.5 block text-[12px] font-medium text-muted tracking-wide uppercase">
         {label}
       </span>
       <div ref={ref} className="relative">
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="flex w-full items-center gap-2.5 rounded-md border border-hair bg-paper py-2.5 pl-3 pr-9 text-[14px] text-ink outline-none transition-colors focus:border-oxblood/50 focus:ring-2 focus:ring-oxblood/12"
+          className="flex w-full items-center gap-2.5 rounded-lg border border-hair bg-paper py-2.5 pl-3.5 pr-9 text-[14px] text-ink outline-none transition-all hover:border-ink/15 focus:border-oxblood/40 focus:ring-[3px] focus:ring-oxblood/8"
         >
           <span className="text-base leading-none">{COUNTRY_FLAGS[value]}</span>
           <span>{value}</span>
         </button>
         <ChevronDown
-          size={15}
+          size={14}
           aria-hidden
-          className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted"
+          className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted transition-transform duration-200"
+          style={{ rotate: open ? "180deg" : "0deg" }}
         />
         {open && (
-          <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-md border border-hair bg-paper shadow-[0_8px_32px_-8px_rgba(27,26,22,0.2)]">
+          <div className="absolute left-0 right-0 top-full z-50 mt-1.5 overflow-hidden rounded-lg border border-hair bg-paper shadow-[0_8px_32px_-8px_rgba(27,26,22,0.2)]">
             {EU_COUNTRIES.map((c) => (
               <button
                 key={c}
@@ -316,7 +352,7 @@ function CountrySelect({
                   onChange(c);
                   setOpen(false);
                 }}
-                className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-[14px] text-left transition-colors hover:bg-sand ${
+                className={`flex w-full items-center gap-2.5 px-3.5 py-2.5 text-[14px] text-left transition-colors hover:bg-sand ${
                   c === value ? "bg-sand font-medium text-ink" : "text-ink-soft"
                 }`}
               >
@@ -330,6 +366,10 @@ function CountrySelect({
     </label>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Select — native select styled
+// ---------------------------------------------------------------------------
 
 function Select({
   label,
@@ -346,14 +386,14 @@ function Select({
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[12.5px] font-medium text-muted">
+      <span className="mb-1.5 block text-[12px] font-medium text-muted tracking-wide uppercase">
         {label}
       </span>
       <span className="relative block">
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full appearance-none rounded-md border border-hair bg-paper py-2.5 pl-3 pr-9 text-[14px] text-ink outline-none transition-colors focus:border-oxblood/50 focus:ring-2 focus:ring-oxblood/12"
+          className="w-full appearance-none rounded-lg border border-hair bg-paper py-2.5 pl-3.5 pr-9 text-[14px] text-ink outline-none transition-all hover:border-ink/15 focus:border-oxblood/40 focus:ring-[3px] focus:ring-oxblood/8"
         >
           {placeholder && <option value="">{placeholder}</option>}
           {options.map((o) => (
@@ -363,7 +403,7 @@ function Select({
           ))}
         </select>
         <ChevronDown
-          size={15}
+          size={14}
           aria-hidden
           className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted"
         />
@@ -372,41 +412,51 @@ function Select({
   );
 }
 
-function Toggle({
+// ---------------------------------------------------------------------------
+// ToggleSwitch — clean pill switch (iOS / Linear style)
+// ---------------------------------------------------------------------------
+
+function ToggleSwitch({
+  label,
   active,
   onClick,
-  children,
 }: {
+  label: string;
   active: boolean;
   onClick: () => void;
-  children: React.ReactNode;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={cn(
-        "inline-flex items-center gap-2 rounded-pill border px-3.5 py-2 text-[13px] font-medium transition-colors",
-        active
-          ? "border-oxblood/30 bg-oxblood-wash text-oxblood"
-          : "border-hair bg-paper text-ink-soft hover:border-ink/20",
-      )}
+      className="group flex w-full items-center justify-between rounded-lg border border-transparent px-3.5 py-2.5 transition-colors hover:border-hair hover:bg-sand/30"
     >
+      <span className="text-[14px] text-ink-soft group-hover:text-ink transition-colors">
+        {label}
+      </span>
       <span
         className={cn(
-          "grid h-3.5 w-3.5 place-items-center rounded-[4px] border transition-colors",
+          "relative inline-flex h-5 w-9 shrink-0 rounded-full border transition-colors duration-200",
           active
-            ? "border-oxblood bg-oxblood text-paper"
-            : "border-hair bg-bone",
+            ? "border-oxblood/50 bg-oxblood"
+            : "border-hair bg-bone group-hover:border-ink/20",
         )}
       >
-        {active && <Check size={10} aria-hidden />}
+        <span
+          className={cn(
+            "absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-[0_1px_2px_rgba(27,26,22,0.12)] transition-all duration-200",
+            active ? "left-[18px]" : "left-[3px]",
+          )}
+        />
       </span>
-      {children}
     </button>
   );
 }
+
+// ---------------------------------------------------------------------------
+// LoadingPanel
+// ---------------------------------------------------------------------------
 
 function LoadingPanel({ stepIdx }: { stepIdx: number }) {
   return (
@@ -451,15 +501,19 @@ function LoadingPanel({ stepIdx }: { stepIdx: number }) {
       <div className="mt-5 space-y-3" aria-hidden>
         {[0, 1, 2].map((i) => (
           <div key={i} className="rounded-lg border border-hair/70 p-4">
-            <div className="h-3 w-1/3 rounded bg-sand animate-pulse motion-reduce:animate-none" />
-            <div className="mt-3 h-2.5 w-full rounded bg-sand/70 animate-pulse motion-reduce:animate-none" />
-            <div className="mt-2 h-2.5 w-4/5 rounded bg-sand/70 animate-pulse motion-reduce:animate-none" />
+            <div className="h-3 w-1/3 rounded bg-sand motion-reduce:animate-none" />
+            <div className="mt-3 h-2.5 w-full rounded bg-sand/70 motion-reduce:animate-none" />
+            <div className="mt-2 h-2.5 w-4/5 rounded bg-sand/70 motion-reduce:animate-none" />
           </div>
         ))}
       </div>
     </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// ErrorPanel
+// ---------------------------------------------------------------------------
 
 function ErrorPanel({
   msg,
