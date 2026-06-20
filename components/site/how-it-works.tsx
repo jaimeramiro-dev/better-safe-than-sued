@@ -25,57 +25,41 @@ export function HowItWorks() {
       <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
         <Reveal className="max-w-2xl">
           <h2 className="text-balance font-serif text-[2rem] font-medium leading-[1.1] tracking-[-0.01em] text-ink sm:text-[2.7rem]">
-            From a sentence to a risk map.
+            Why this needs AI, not a search box.
           </h2>
           <p className="mt-5 text-[17px] leading-relaxed text-muted">
-            Why this needs AI and not a search engine: no page on the internet
-            cross-references your exact product, country, audience, platform, and
-            payment method, then writes it back to you in plain language. That
-            intersection is the whole job.
+            No page on the internet cross-references your exact product, country,
+            audience, platform, and payment method, then writes the risks back to
+            you in plain language. A search engine returns pages about chargebacks
+            in general. It can&apos;t reason that gift cards + Spain + Shopify +
+            card payments is the specific combination that ended Sharkiez, and
+            tell you so before you launch. That intersection is the entire job,
+            and it&apos;s a reasoning task, not a lookup.
           </p>
         </Reveal>
 
-        <div className="mt-14 grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">
-          <Reveal>
-            <div className="rounded-xl border border-hair bg-paper p-7">
-              <p className="font-serif text-[1.45rem] leading-snug text-ink">
-                A search engine returns pages. It can&apos;t reason about{" "}
-                <span className="italic">your</span> specific combination of
-                risks, or translate them into something you can act on.
-              </p>
-              <div className="mt-6 h-px bg-hair" />
-              <p className="mt-6 text-[14.5px] leading-relaxed text-muted">
-                BSTS reads your setup, cross-references the EU frameworks that
-                actually apply, and pays special attention to the fraud and
-                chargeback exposure that blindsides new founders. Every point
-                shows its source.
-              </p>
-            </div>
-          </Reveal>
-
-          <Reveal delay={0.1}>
-            <ol className="divide-y divide-hair overflow-hidden rounded-xl border border-hair bg-paper">
-              {STEPS.map((step) => {
-                const Icon = step.icon;
-                return (
-                  <li key={step.title} className="flex gap-4 p-6">
-                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-oxblood-wash text-oxblood">
-                      <Icon size={18} aria-hidden />
-                    </span>
-                    <div>
-                      <h3 className="text-[16.5px] font-semibold tracking-tight text-ink">
-                        {step.title}
-                      </h3>
-                      <p className="mt-1.5 text-[14.5px] leading-relaxed text-muted">
-                        {step.body}
-                      </p>
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
-          </Reveal>
-        </div>
+        <Reveal delay={0.1} className="mt-12 max-w-2xl">
+          <ol className="divide-y divide-hair overflow-hidden rounded-xl border border-hair bg-paper">
+            {STEPS.map((step) => {
+              const Icon = step.icon;
+              return (
+                <li key={step.title} className="flex gap-4 p-6">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-oxblood-wash text-oxblood">
+                    <Icon size={18} aria-hidden />
+                  </span>
+                  <div>
+                    <h3 className="text-[16.5px] font-semibold tracking-tight text-ink">
+                      {step.title}
+                    </h3>
+                    <p className="mt-1.5 text-[14.5px] leading-relaxed text-muted">
+                      {step.body}
+                    </p>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        </Reveal>
       </div>
     </section>
   );

@@ -2,15 +2,14 @@
 
 import { motion } from "framer-motion";
 import {
-  TrendingUp,
   TriangleAlert,
-  Send,
+  MessageSquare,
   Banknote,
   Ban,
   type LucideIcon,
 } from "lucide-react";
 
-type Tone = "neutral" | "warn" | "risk";
+type Tone = "warn" | "risk";
 
 const STEPS: {
   icon: LucideIcon;
@@ -19,39 +18,32 @@ const STEPS: {
   tone: Tone;
 }[] = [
   {
-    icon: TrendingUp,
-    title: "The orders looked like a breakthrough",
-    body: "A rush of high-value orders for gift cards came in. After slow months, it felt like the store was finally working.",
-    tone: "neutral",
-  },
-  {
     icon: TriangleAlert,
-    title: "The platform flagged them amber, not red",
-    body: "Our payment platform marked them as possible fraud but did not block them. Amber felt safe enough, so we shipped.",
+    title: "The flag we ignored",
+    body: "Shopify marked the orders amber, possible fraud, not a hard block. Amber felt safe enough. We shipped.",
     tone: "warn",
   },
   {
-    icon: Send,
-    title: "They were stolen cards",
-    body: "The cards were stolen. The gift codes were resold on Telegram within minutes. Digital goods cannot be recalled once they are delivered.",
+    icon: MessageSquare,
+    title: "The screenshot that explained everything",
+    body: "A customer sent us a screenshot. Buyers were using stolen credit cards to buy gift cards in our own store, then reselling the codes at a discount on Telegram within minutes. Digital goods can't be recalled. The money was already gone.",
     tone: "risk",
   },
   {
     icon: Banknote,
-    title: "Then the chargebacks came",
-    body: "Months later, a flood of disputes. The banks clawed the money back and stacked a fee on every order we had shipped.",
+    title: "The chargebacks",
+    body: "Months later the banks clawed the money back one by one, a fee on every order. We blew past the card-network dispute threshold.",
     tone: "risk",
   },
   {
     icon: Ban,
-    title: "We were banned and on the hook",
-    body: "We blew past the card-network dispute threshold, lost our payment account, and were told we were personally liable. We were in high school, with no company and no advisor.",
+    title: "Banned, and personally liable",
+    body: "We lost our payment account. To get it back they demanded we cover every chargeback and warned us we had unlimited liability, with the named account holder on the hook personally. No company structure, no advisor, no idea what unlimited liability meant.",
     tone: "risk",
   },
 ];
 
 const TONE: Record<Tone, { ring: string; icon: string }> = {
-  neutral: { ring: "border-hair bg-paper", icon: "text-ink-soft" },
   warn: { ring: "border-sev-med/30 bg-sev-med-wash", icon: "text-sev-med" },
   risk: { ring: "border-sev-high/30 bg-sev-high-wash", icon: "text-sev-high" },
 };
@@ -64,12 +56,13 @@ export function FounderStory() {
           <p className="text-[20px] font-medium uppercase tracking-[0.17em] text-oxblood">
             Why this exists ?
           </p>
-          <h2 className="mt-4 text-balance font-serif text-[2rem] font-medium leading-[1.1] tracking-[-0.01em] text-ink sm:text-[2.7rem]">
-            We learned this the expensive way.
+          <h2 className="mt-4 text-balance font-serif text-[2rem] font-medium leading-[1.12] tracking-[-0.01em] text-ink sm:text-[2.6rem]">
+            We learned this the expensive way. Our store was called Sharkiez.
           </h2>
           <p className="mt-5 text-[17px] leading-relaxed text-muted">
-            Before BSTS, we ran an e-commerce brand. Here is the chain of risks
-            that nobody flagged for us, until the damage was already done.
+            Two high-schoolers built Sharkiez, a shark-shaped footwear brand. A
+            wave of high-value gift-card orders came from Mexico and felt like a
+            breakthrough after slow months.
           </p>
         </div>
 
@@ -106,15 +99,17 @@ export function FounderStory() {
           <div className="lg:pt-2">
             <div className="rounded-xl border border-hair bg-ink p-8 text-bone lg:sticky lg:top-24">
               <p className="font-serif text-[1.55rem] leading-snug text-bone">
-                Every one of those steps had a name and a rule behind it.
+                Every step had a name and a rule.
               </p>
-              <p className="mt-3 font-serif text-[1.55rem] leading-snug text-bone/65">
-                We just never saw them coming.
+              <p className="mt-3 text-[15px] leading-relaxed text-bone/70">
+                PSD2, the Visa dispute-monitoring threshold, irrecoverable
+                digital goods, autónomo vs SL liability. We never saw them
+                coming.
               </p>
               <div className="mt-7 h-px w-full bg-bone/15" />
               <p className="mt-7 text-[14px] leading-relaxed text-bone/70">
-                BSTS is the tool we needed that week: it surfaces the same risks
-                in plain language, before a single order ships.
+                Run our exact old setup through BSTS and it surfaces every one of
+                these, before a single order ships.
               </p>
             </div>
           </div>
