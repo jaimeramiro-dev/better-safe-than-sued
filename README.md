@@ -6,8 +6,16 @@ your store in plain language, and BSTS returns a plain-language map of the
 you. The landing page **is** the product: the hero contains a live demo that
 generates a real risk map inline.
 
-Built for the USAII hackathon. Next.js (App Router) + TypeScript + Tailwind v4,
-with the AI engine running server-side via the Anthropic API.
+Built for the USAII hackathon. 
+
+<h2 align="center">Tech Stack</h2>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Framework-Next.js_15-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" />
+  <img src="https://img.shields.io/badge/Language-TypeScript_5-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
+  <img src="https://img.shields.io/badge/Styling-Tailwind_CSS_v4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" />
+  <img src="https://img.shields.io/badge/AI-Claude_API-D97757?style=for-the-badge&logo=anthropic&logoColor=white" />
+</p>
 
 > This is guidance for clarity, not legal advice. BSTS never issues a legal
 > verdict, cites the framework behind every point, and recommends validating
