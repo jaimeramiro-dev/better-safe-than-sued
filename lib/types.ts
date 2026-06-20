@@ -43,6 +43,9 @@ export interface RiskMap {
   preLaunchChecklist: ChecklistItem[];
   /** specific fraud/operational red flags this founder should monitor */
   watchFor: string[];
+  /** when true, the assessment is too complex for automated advice and the
+   *  founder should be directed to a qualified professional */
+  referToLawyer: boolean;
 }
 
 /** The structured context the hero sends to the API. */

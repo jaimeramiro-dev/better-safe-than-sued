@@ -55,6 +55,7 @@ const genResultSchema = z.object({
     z.object({ item: z.string(), reason: z.string() }),
   ),
   watchFor: z.array(z.string()),
+  referToLawyer: z.boolean(),
 });
 
 const verdictSchema = z.object({
@@ -91,6 +92,7 @@ const riskMapSchema = z.object({
   risks: z.array(riskSchema),
   preLaunchChecklist: z.array(checklistItemSchema),
   watchFor: z.array(z.string()),
+  referToLawyer: z.boolean(),
 });
 
 // ---------------------------------------------------------------------------
@@ -110,6 +112,7 @@ NON-NEGOTIABLE RULES
 6. CALIBRATE, DO NOT CATASTROPHIZE. Match severity and emphasis to what they actually described. Do not default every card-taking or digital business to maximum fraud-and-chargeback panic. Fraud and chargebacks are serious WHEN they clearly apply (the founder takes cards as merchant of record and delivers instantly); lead with them only when the facts support it. Otherwise give them their proper weight among the other risks.
 7. NEVER GIVE A LEGAL VERDICT. Explain, surface and clarify; the decision stays with the human. Be honest about uncertainty and recommend validating important decisions with a qualified professional.
 8. PLAIN LANGUAGE. No legalese in the explanations. Short sentences, like a sharp friend who happens to know this stuff.
+9. KNOW WHEN TO REFER TO A LAWYER. Set "referToLawyer" to true when the business description is too vague, unusual, or complex for safe automated guidance — for example: heavily regulated industries (financial services, health products, cannabis, alcohol), unusual business models the sources don't cover, or when so many critical assumptions are needed that the risk map would be misleading. When true, you may still fill in the other fields, but the UI will show a lawyer-referral alert instead of the full risk map.
 
 OUTPUT: the risks that genuinely apply to this specific business, most-severe first (usually 5 to 7; do not pad with generic risks). overallRiskLevel reflects the worst realistic exposure given what they actually described. preLaunchChecklist has 3-6 concrete setup actions that fit their business. watchFor has 3-6 short, specific red flags relevant to them.
 
@@ -174,6 +177,7 @@ function generationSchema(sourceIds: string[]) {
         },
       },
       watchFor: { type: "array", items: { type: "string" } },
+      referToLawyer: { type: "boolean" },
     },
     required: [
       "businessSummary",
@@ -182,6 +186,7 @@ function generationSchema(sourceIds: string[]) {
       "risks",
       "preLaunchChecklist",
       "watchFor",
+      "referToLawyer",
     ],
   } as const;
 }
@@ -227,6 +232,7 @@ interface GenResult {
   risks: GenRisk[];
   preLaunchChecklist: { item: string; reason: string }[];
   watchFor: string[];
+  referToLawyer: boolean;
 }
 interface Verdict {
   index: number;
@@ -453,6 +459,7 @@ export async function POST(request: Request) {
       risks,
       preLaunchChecklist: gen.preLaunchChecklist,
       watchFor: gen.watchFor,
+      referToLawyer: gen.referToLawyer,
     };
     riskMapSchema.parse(riskMap);
     if (responseCache.size >= MAX_CACHE) {
