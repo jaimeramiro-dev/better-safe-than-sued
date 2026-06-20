@@ -109,7 +109,7 @@ export function OutputProof() {
             This is what you get back.
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-[16px] leading-relaxed text-muted">
-            A gift-card store in Spain, mapped. The exact setup that ended
+            Imagine a <b>gift-card</b> store in Spain, mapped. The exact setup that ended
             Sharkiez, with every risk surfaced before a single order ships.
           </p>
         </Reveal>

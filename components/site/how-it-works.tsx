@@ -32,8 +32,8 @@ export function HowItWorks() {
             audience, platform, and payment method, then writes the risks back to
             you in plain language. A search engine returns pages about chargebacks
             in general. It can&apos;t reason that gift cards + Spain + Shopify +
-            card payments is the specific combination that ended Sharkiez, and
-            tell you so before you launch. That intersection is the entire job,
+            card payments.That's the specific combination that ended Sharkiez, and we 
+            told you so before you launch. That intersection is the entire job,
             and it&apos;s a reasoning task, not a lookup.
           </p>
         </Reveal>
