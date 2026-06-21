@@ -36,6 +36,18 @@ const analyzeInputSchema = z.object({
   acceptsCards: z.boolean(),
 });
 
+// The request adds a phase: "assumptions" returns just the editable assumptions,
+// "generate" runs the full risk map and may carry the founder's confirmed,
+// edited assumptions back in so generation respects them.
+const requestSchema = analyzeInputSchema.extend({
+  phase: z.enum(["assumptions", "generate"]).default("generate"),
+  confirmedAssumptions: z.array(z.string().trim()).optional(),
+});
+
+const assumptionsResultSchema = z.object({
+  assumptions: z.array(z.string()),
+});
+
 const genRiskSchema = z.object({
   title: z.string(),
   severity: severitySchema,
@@ -119,6 +131,18 @@ OUTPUT: the risks that genuinely apply to this specific business, most-severe fi
 EVIDENCE: Each risk must include an "evidence" array of 2-4 short, concrete reasons (each 1-5 words) that explain which specific aspects of THIS business trigger the risk. Examples: "Digital goods", "Subscription billing", "Cross-border sales", "Merchant of record", "Instant delivery", "High-value items", "Platform payout model". These help the founder see exactly why the risk applies to them.
 
 ASSUMPTIONS: in "assumptions", list the 2-4 inferences you had to make because their description was incomplete or ambiguous and that most affect the risks (for example what exactly they sell, or whether THEY charge the customer's card versus a platform doing it). Phrase each as a short statement they can confirm or correct, e.g. "We assumed you charge customers directly through Shopify, not via Roblox." Do not list things they stated explicitly. Use an empty list only if nothing important had to be assumed.`;
+
+const ASSUMPTIONS_SYSTEM = `You are a senior EU e-commerce compliance and payments-risk analyst helping a first-time online founder with NO legal background.
+
+BEFORE you map their risks, surface the assumptions you would have to make about their business because their description is incomplete or ambiguous — the inferences that most change WHICH risks apply and HOW severe they are. The founder will review this list and correct anything wrong, so the risk map is built on facts instead of guesses.
+
+RULES
+1. Output 2 to 5 assumptions, most important first. If their description is rich enough that little needs assuming, return only the 1-2 that still matter — never pad.
+2. Phrase each as a short, plain-language statement of what you are ASSUMING about THEM, written so they can confirm or correct it. Examples: "You charge customers' cards directly through your store, rather than a platform paying you out." / "You sell to consumers (B2C), not to other businesses." / "You collect and store customer personal data (names, emails, addresses)."
+3. Focus on what actually moves the risk picture: what exactly they sell, who charges the customer's card / who is the merchant of record, B2C vs B2B, whether they hold personal data, where their customers are, and whether they are an established company or pre-launch.
+4. Do NOT restate things they already told you explicitly (their country, platform, or any answer they gave). Only surface genuine inferences.
+5. No legalese. Short sentences a 17-year-old founder could understand. Write "you", not "the founder".
+6. Do not give advice, list risks, or mention regulations here. Only the assumptions.`;
 
 const VERIFICATION_SYSTEM = `You are a strict fact-checker for a compliance tool. You are given risk claims and the exact source text each one cites. For every risk, decide whether the cited source actually supports the claim.
 
@@ -212,6 +236,15 @@ const VERIFICATION_SCHEMA = {
   required: ["verdicts"],
 } as const;
 
+const ASSUMPTIONS_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    assumptions: { type: "array", items: { type: "string" } },
+  },
+  required: ["assumptions"],
+} as const;
+
 // ---------------------------------------------------------------------------
 // Internal shapes
 // ---------------------------------------------------------------------------
@@ -250,23 +283,52 @@ function sourcesBlock(sources: KnowledgeEntry[]): string {
     .join("\n");
 }
 
-function buildGenerationPrompt(
-  input: AnalyzeInput,
-  sources: KnowledgeEntry[],
-): string {
+function structuredContext(input: AnalyzeInput): string[] {
   return [
-    "Build the risk map for this founder. Ground every risk in the SOURCES below and cite each one by its id.",
-    "",
     "STRUCTURED CONTEXT",
     `- Country (based / selling from): ${input.country}`,
     `- Selling platform: ${input.platform}`,
     `- Product type: ${input.productType || "(not specified)"}`,
     `- Sells gift cards or digital goods: ${input.sellsGiftCards ? "YES" : "No"}`,
     `- Accepts card payments: ${input.acceptsCards ? "YES" : "No"}`,
+  ];
+}
+
+function buildAssumptionsPrompt(input: AnalyzeInput): string {
+  return [
+    "List the assumptions you would have to make about this founder's business before mapping their risks.",
+    "",
+    ...structuredContext(input),
+    "",
+    "THEIR OWN WORDS",
+    input.description.trim() || "(no free-text description provided)",
+  ].join("\n");
+}
+
+function buildGenerationPrompt(
+  input: AnalyzeInput,
+  sources: KnowledgeEntry[],
+  confirmedAssumptions?: string[],
+): string {
+  const confirmed = (confirmedAssumptions ?? [])
+    .map((a) => a.trim())
+    .filter(Boolean);
+  return [
+    "Build the risk map for this founder. Ground every risk in the SOURCES below and cite each one by its id.",
+    "",
+    ...structuredContext(input),
     "",
     "THEIR OWN WORDS",
     input.description.trim() || "(no free-text description provided)",
     "",
+    ...(confirmed.length
+      ? [
+          "CONFIRMED ASSUMPTIONS",
+          "The founder has REVIEWED and corrected these. Treat every one as an authoritative fact about their business — even where it differs from or adds to their free-text description above — and reflect them in the risks you surface and their severity. Use exactly these as the \"assumptions\" you output; do not invent new ones.",
+          ...confirmed.map((a) => `- ${a}`),
+          "",
+        ]
+      : []),
     "SOURCES (cite only from these, by id):",
     sourcesBlock(sources),
   ].join("\n");
@@ -336,10 +398,15 @@ async function callStructured<T>(
 // ---------------------------------------------------------------------------
 
 const responseCache = new Map<string, RiskMap>();
+const assumptionsCache = new Map<string, string[]>();
 const MAX_CACHE = 50;
 
-function cacheKey(input: AnalyzeInput): string {
-  return JSON.stringify(input);
+function rememberInCache<V>(cache: Map<string, V>, key: string, value: V) {
+  if (cache.size >= MAX_CACHE) {
+    const first = cache.keys().next().value;
+    if (first) cache.delete(first);
+  }
+  cache.set(key, value);
 }
 
 // ---------------------------------------------------------------------------
@@ -357,9 +424,21 @@ export async function POST(request: Request) {
     );
   }
 
+  let phase: "assumptions" | "generate";
+  let confirmedAssumptions: string[] | undefined;
   let input: AnalyzeInput;
   try {
-    input = analyzeInputSchema.parse(await request.json());
+    const parsed = requestSchema.parse(await request.json());
+    phase = parsed.phase;
+    confirmedAssumptions = parsed.confirmedAssumptions;
+    input = {
+      description: parsed.description,
+      country: parsed.country,
+      platform: parsed.platform,
+      productType: parsed.productType,
+      sellsGiftCards: parsed.sellsGiftCards,
+      acceptsCards: parsed.acceptsCards,
+    };
   } catch (err) {
     if (err instanceof z.ZodError) {
       return Response.json(
@@ -380,20 +459,43 @@ export async function POST(request: Request) {
     );
   }
 
-  const key = cacheKey(input);
+  const client = new Anthropic();
+
+  // ----- Phase 1: surface the assumptions for the founder to confirm/edit -----
+  if (phase === "assumptions") {
+    const aKey = JSON.stringify(input);
+    const aCached = assumptionsCache.get(aKey);
+    if (aCached) return Response.json({ assumptions: aCached });
+    try {
+      const gen = await callStructured<{ assumptions: string[] }>(client, {
+        system: ASSUMPTIONS_SYSTEM,
+        user: buildAssumptionsPrompt(input),
+        schema: ASSUMPTIONS_SCHEMA,
+        effort: "low",
+        maxTokens: 900,
+      });
+      assumptionsResultSchema.parse(gen);
+      rememberInCache(assumptionsCache, aKey, gen.assumptions);
+      return Response.json({ assumptions: gen.assumptions });
+    } catch (err) {
+      return modelErrorResponse(err);
+    }
+  }
+
+  // ----- Phase 2: build the full risk map (honouring confirmed assumptions) ---
+  const key = JSON.stringify({ input, confirmedAssumptions });
   const cached = responseCache.get(key);
   if (cached) return Response.json(cached);
 
   const sources = selectSources(input);
   const sourceById = new Map(sources.map((s) => [s.id, s]));
   const factById = new Map(sources.map((s) => [s.id, s.fact]));
-  const client = new Anthropic();
 
   try {
     // 1) Grounded generation — the model may only cite the provided sources.
     const gen = await callStructured<GenResult>(client, {
       system: GENERATION_SYSTEM,
-      user: buildGenerationPrompt(input, sources),
+      user: buildGenerationPrompt(input, sources, confirmedAssumptions),
       schema: generationSchema(sources.map((s) => s.id)),
       effort: "medium",
       maxTokens: 4000,
@@ -452,43 +554,53 @@ export async function POST(request: Request) {
       };
     });
 
+    // The founder's confirmed, edited assumptions are authoritative — show
+    // exactly what they signed off on rather than whatever the model re-derived.
+    const cleanedConfirmed = (confirmedAssumptions ?? [])
+      .map((a) => a.trim())
+      .filter(Boolean);
+
     const riskMap: RiskMap = {
       businessSummary: gen.businessSummary,
       overallRiskLevel: gen.overallRiskLevel,
-      assumptions: gen.assumptions ?? [],
+      assumptions: cleanedConfirmed.length ? cleanedConfirmed : gen.assumptions ?? [],
       risks,
       preLaunchChecklist: gen.preLaunchChecklist,
       watchFor: gen.watchFor,
       referToLawyer: gen.referToLawyer,
     };
     riskMapSchema.parse(riskMap);
-    if (responseCache.size >= MAX_CACHE) {
-      const first = responseCache.keys().next().value;
-      if (first) responseCache.delete(first);
-    }
-    responseCache.set(key, riskMap);
+    rememberInCache(responseCache, key, riskMap);
     return Response.json(riskMap);
   } catch (err) {
-    if (err instanceof RefusalError) {
-      return Response.json(
-        {
-          error:
-            "The model declined to analyze this one. Try rephrasing your business description.",
-        },
-        { status: 422 },
-      );
-    }
-    if (err instanceof Anthropic.APIError) {
-      console.error(`Anthropic API error ${err.status}:`, err.message);
-      return Response.json(
-        { error: "The AI engine had a hiccup. Please try again in a moment." },
-        { status: 502 },
-      );
-    }
-    console.error("Risk analysis failed:", err);
+    return modelErrorResponse(err);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Shared error mapping for any model-calling phase
+// ---------------------------------------------------------------------------
+
+function modelErrorResponse(err: unknown): Response {
+  if (err instanceof RefusalError) {
     return Response.json(
-      { error: "Something went wrong generating your risk map. Please retry." },
-      { status: 500 },
+      {
+        error:
+          "The model declined to analyze this one. Try rephrasing your business description.",
+      },
+      { status: 422 },
     );
   }
+  if (err instanceof Anthropic.APIError) {
+    console.error(`Anthropic API error ${err.status}:`, err.message);
+    return Response.json(
+      { error: "The AI engine had a hiccup. Please try again in a moment." },
+      { status: 502 },
+    );
+  }
+  console.error("Risk analysis failed:", err);
+  return Response.json(
+    { error: "Something went wrong generating your risk map. Please retry." },
+    { status: 500 },
+  );
 }
