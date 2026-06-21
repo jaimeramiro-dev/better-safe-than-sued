@@ -17,27 +17,24 @@ import type { Risk, RiskMap, Severity } from "@/lib/types";
 
 const SEV: Record<
   Severity,
-  { label: string; text: string; wash: string; ring: string; dot: string }
+  { label: string; text: string; ring: string; dot: string }
 > = {
   high: {
     label: "High",
     text: "text-sev-high",
-    wash: "bg-sev-high-wash",
-    ring: "border-sev-high/25",
+    ring: "border-sev-high/15",
     dot: "bg-sev-high",
   },
   medium: {
-    label: "Medium",
+    label: "Med",
     text: "text-sev-med",
-    wash: "bg-sev-med-wash",
-    ring: "border-sev-med/30",
+    ring: "border-sev-med/15",
     dot: "bg-sev-med",
   },
   low: {
     label: "Low",
     text: "text-sev-low",
-    wash: "bg-sev-low-wash",
-    ring: "border-sev-low/35",
+    ring: "border-sev-low/15",
     dot: "bg-sev-low",
   },
 };
@@ -166,6 +163,8 @@ export function RiskMapView({ data }: { data: RiskMap }) {
       {/* Result header: how we read the business + overall risk */}
       <motion.div
         variants={item}
+        whileHover={reduce ? {} : { y: -2 }}
+        transition={{ duration: 0.3, ease: EASE }}
         className="flex flex-col gap-4 rounded-lg border border-hair bg-paper p-5 sm:flex-row sm:items-start sm:justify-between sm:p-6"
       >
         <div className="flex gap-3.5">
@@ -183,7 +182,7 @@ export function RiskMapView({ data }: { data: RiskMap }) {
         </div>
         <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
           <span
-            className={`inline-flex items-center gap-2 rounded-pill border ${overall.ring} ${overall.wash} px-3 py-1.5 text-[13px] font-medium ${overall.text}`}
+            className={`inline-flex items-center gap-2 text-[13px] font-medium ${overall.text}`}
           >
             <span className={`h-1.5 w-1.5 rounded-full ${overall.dot}`} />
             {overall.label} overall risk
@@ -260,9 +259,15 @@ export function RiskMapView({ data }: { data: RiskMap }) {
                 <CircleHelp size={15} aria-hidden />
               </span>
               <div className="flex-1">
-                <p className="text-[13.5px] font-semibold text-ink">
+                <motion.p
+                  initial={{ opacity: 0, y: 8 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-40px" }}
+                  transition={{ duration: 0.4, ease: EASE }}
+                  className="text-[13.5px] font-semibold text-ink"
+                >
                   What we assumed about your business
-                </p>
+                </motion.p>
                 <p className="mt-0.5 text-[12.5px] leading-relaxed text-muted">
                   These risks depend on the reading below. If any of it is wrong,
                   edit your description and map again.
@@ -288,6 +293,8 @@ export function RiskMapView({ data }: { data: RiskMap }) {
                 <motion.article
                   key={i}
                   variants={item}
+                  whileHover={reduce ? {} : { y: -3 }}
+                  transition={{ duration: 0.3, ease: EASE }}
                   className={`overflow-hidden rounded-lg border ${s.ring} bg-paper`}
                 >
                   <div className="flex items-start gap-3 border-b border-hair/70 px-5 py-3.5">
@@ -296,8 +303,9 @@ export function RiskMapView({ data }: { data: RiskMap }) {
                       {risk.title}
                     </h4>
                     <span
-                      className={`shrink-0 rounded-pill ${s.wash} px-2.5 py-0.5 text-[11.5px] font-medium ${s.text}`}
+                      className={`inline-flex items-center gap-1.5 text-[11px] font-medium ${s.text}`}
                     >
+                      <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
                       {s.label}
                     </span>
                   </div>
@@ -369,9 +377,19 @@ export function RiskMapView({ data }: { data: RiskMap }) {
           <div className="grid gap-3 lg:grid-cols-2">
             <motion.div
               variants={item}
+              whileHover={reduce ? {} : { y: -2 }}
+              transition={{ duration: 0.3, ease: EASE }}
               className="rounded-lg border border-hair bg-paper p-5"
             >
-              <h4 className="font-serif text-[1.05rem] text-ink">Before you sell</h4>
+              <motion.h4
+                initial={{ opacity: 0, y: 8 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-40px" }}
+                transition={{ duration: 0.4, ease: EASE }}
+                className="font-serif text-[1.05rem] text-ink"
+              >
+                Before you sell
+              </motion.h4>
               <p className="mt-0.5 text-[13px] text-muted">Set these up first.</p>
               <ul className="mt-4 space-y-3.5">
                 {data.preLaunchChecklist.map((c, i) => (
@@ -394,9 +412,19 @@ export function RiskMapView({ data }: { data: RiskMap }) {
 
             <motion.div
               variants={item}
+              whileHover={reduce ? {} : { y: -2 }}
+              transition={{ duration: 0.3, ease: EASE }}
               className="rounded-lg border border-hair bg-paper p-5"
             >
-              <h4 className="font-serif text-[1.05rem] text-ink">Watch for</h4>
+              <motion.h4
+                initial={{ opacity: 0, y: 8 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-40px" }}
+                transition={{ duration: 0.4, ease: EASE }}
+                className="font-serif text-[1.05rem] text-ink"
+              >
+                Watch for
+              </motion.h4>
               <p className="mt-0.5 text-[13px] text-muted">
                 Red flags worth catching early.
               </p>
