@@ -158,7 +158,7 @@ export function RiskConsole() {
     <div id="try" className="scroll-mt-24">
       <form
         onSubmit={onSubmit}
-        className="rounded-xl border border-hair bg-paper px-6 py-7 font-satoshi shadow-[0_1px_0_rgba(27,26,22,0.03),0_22px_48px_-30px_rgba(27,26,22,0.28)] sm:px-8 sm:py-8"
+        className="rounded-xl border border-hair bg-paper px-6 py-7 font-satoshi shadow-[0_1px_0_rgba(27,26,22,0.03),0_22px_48px_-30px_rgba(27,26,22,0.28)] sm:px-8 sm:py-8 relative border-t-2 border-t-oxblood/50"
       >
         {/* --- Description --- */}
         <div>
@@ -250,11 +250,11 @@ export function RiskConsole() {
                   className="animate-spin motion-reduce:animate-none"
                   aria-hidden
                 />
-                Mapping risks…
+                <span className="font-serif italic">Mapping risks…</span>
               </>
             ) : (
               <>
-                Map my risks
+                <span className="font-serif italic">Map my risks</span>
                 <ArrowRight
                   size={16}
                   className="transition-transform group-hover:translate-x-0.5"
