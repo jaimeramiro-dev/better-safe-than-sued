@@ -133,3 +133,10 @@ lib/
 - **No verdicts:** the model is instructed to explain and surface risk, never to
   rule on what is legally required, and to point to a professional for
   high-stakes decisions.
+
+---
+
+## Contributors
+
+- [**Jaime Ramiro**](https://github.com/jaimeramiro-dev) (@jaimeramiro-dev)
+- [**Uriel Salazar Granda**](https://github.com/uriel-salazar) (@uriel-salazar)
