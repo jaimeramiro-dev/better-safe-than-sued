@@ -59,6 +59,7 @@ export function Footer() {
           <div className="mt-5 flex flex-col gap-2 text-[12.5px] text-faint sm:flex-row sm:items-center sm:justify-between">
             <span>© {new Date().getFullYear()} Better Safe Than Sued</span>
             <span>Built in the EU, focused on EU regulation</span>
+            <span> Made with love ❤️</span>
           </div>
         </div>
       </div>
