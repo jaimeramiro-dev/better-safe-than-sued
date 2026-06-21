@@ -2,9 +2,11 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
+import Image from "next/image";
 import {
   ArrowRight,
   ChevronDown,
+  Code,
   LoaderCircle,
   Sparkles,
   TriangleAlert,
@@ -18,6 +20,14 @@ import {
   type RiskMap,
 } from "@/lib/types";
 import { cn } from "@/lib/utils";
+
+const PLATFORM_IMAGES: Record<string, string | null> = {
+  Shopify: "/brands-images/shopify.png",
+  WooCommerce: "/brands-images/woocommerce.png",
+  Wix: "/brands-images/wix.png",
+  Etsy: "/brands-images/etsy.png",
+  "Custom build": null,
+};
 
 const COUNTRY_FLAGS: Record<string, string> = {
   Spain: "🇪🇸",
@@ -207,11 +217,10 @@ export function RiskConsole() {
             value={country}
             onChange={setCountry}
           />
-          <Select
+          <PlatformSelect
             label="Platform"
             value={platform}
             onChange={setPlatform}
-            options={[...PLATFORMS]}
           />
           <Select
             label="Product type"
@@ -358,6 +367,95 @@ function CountrySelect({
               >
                 <span className="text-base leading-none">{COUNTRY_FLAGS[c]}</span>
                 <span>{c}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </label>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// PlatformSelect — custom dropdown with brand image
+// ---------------------------------------------------------------------------
+
+function PlatformSelect({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    if (open) document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-[12px] font-medium text-muted tracking-wide uppercase">
+        {label}
+      </span>
+      <div ref={ref} className="relative">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="flex w-full items-center gap-2.5 rounded-lg border border-hair bg-paper py-2.5 pl-3.5 pr-9 text-[14px] text-ink outline-none transition-all hover:border-ink/15 focus:border-oxblood/40 focus:ring-[3px] focus:ring-oxblood/8"
+        >
+          {PLATFORM_IMAGES[value] ? (
+            <Image
+              src={PLATFORM_IMAGES[value]!}
+              alt={value}
+              width={20}
+              height={20}
+              className="h-5 w-auto object-contain"
+            />
+          ) : (
+            <Code size={18} className="text-muted" aria-hidden />
+          )}
+          <span>{value}</span>
+        </button>
+        <ChevronDown
+          size={14}
+          aria-hidden
+          className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted transition-transform duration-200"
+          style={{ rotate: open ? "180deg" : "0deg" }}
+        />
+        {open && (
+          <div className="absolute left-0 right-0 top-full z-50 mt-1.5 overflow-hidden rounded-lg border border-hair bg-paper shadow-[0_8px_32px_-8px_rgba(27,26,22,0.2)]">
+            {PLATFORMS.map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => {
+                  onChange(p);
+                  setOpen(false);
+                }}
+                className={`flex w-full items-center gap-2.5 px-3.5 py-2.5 text-[14px] text-left transition-colors hover:bg-sand ${
+                  p === value ? "bg-sand font-medium text-ink" : "text-ink-soft"
+                }`}
+              >
+                {PLATFORM_IMAGES[p] ? (
+                  <Image
+                    src={PLATFORM_IMAGES[p]!}
+                    alt={p}
+                    width={20}
+                    height={20}
+                    className="h-5 w-auto object-contain"
+                  />
+                ) : (
+                  <Code size={18} className="text-muted" aria-hidden />
+                )}
+                <span>{p}</span>
               </button>
             ))}
           </div>
