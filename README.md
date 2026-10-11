@@ -140,3 +140,4 @@ lib/
 
 - [**Jaime Ramiro**](https://github.com/jaimeramiro-dev) (@jaimeramiro-dev)
 - [**Uriel Salazar Granda**](https://github.com/uriel-salazar) (@uriel-salazar)
+- [**Nicolas Matesanz Angel**](https://github.com/nicolasmatesanz) (@nicolasmatesanz)
